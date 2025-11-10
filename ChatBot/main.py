@@ -4,6 +4,9 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import os
 
+from models.dogHealth import DogHealth
+from services.dogAnalyzer import analyze_dog_health
+
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -26,3 +29,8 @@ def chat(req: ChatRequest):
     reply = response.choices[0].message.content
     print(f"User: {req.message}\nBot: {reply}")
     return {"reply": reply}
+
+@app.post("/analyze_dog_health")
+def analyze_health(req: ChatRequest):
+    dog_health = analyze_dog_health(req.message)
+    return {"dog_health": dog_health.model_dump()}
