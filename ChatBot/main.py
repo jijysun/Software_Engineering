@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import os
 
 from models.dogHealth import DogHealth
+from models.dogHealthResponse import DogHealthResponse
 from services.dogAnalyzer import analyze_dog_health
 
 load_dotenv()
@@ -31,6 +32,7 @@ def chat(req: ChatRequest):
     return {"reply": reply}
 
 @app.post("/analyze_dog_health")
-def analyze_health(req: ChatRequest):
-    dog_health = analyze_dog_health(req.message)
-    return {"dog_health": dog_health.model_dump()}
+def analyze_health(req: DogHealthResponse):
+    dog_health = analyze_dog_health(req)
+    #return {"dog_health": dog_health.model_dump()}
+    return dog_health

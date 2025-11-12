@@ -1,5 +1,6 @@
 from openai import OpenAI
 from models.dogHealth import DogHealth
+from models.dogHealthResponse import DogHealthResponse
 from dotenv import load_dotenv
 import os
 
@@ -7,22 +8,27 @@ load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def analyze_dog_health(user_message: str) -> DogHealth:
-    prompt = f"""
-    사용자가 입력한 문장에서 반려견의 건강상태를 추출하세요.
-    다음 항목에 맞춰 JSON으로 반환:
-    [dog_id, name, age, weight, breed, sex, appetite, activity_level, stool_condition, 
-     skin_condition, energy_level, last_checkup_date, vaccination_status]
 
-    입력: "{user_message}"
+def analyze_dog_health(request : DogHealthResponse) -> DogHealthResponse:
+
+    prompt = f"""
+    아래는 반려견의 이전 건강 상태입니다:
+    {request.dog_health.model_dump_json(indent=2)}
+
+    사용자의 입력:
+    "{request.msg}"
+
+    위 정보를 참고해 필요한 부분만 갱신하고,
+    새로운 dog_health와 조언(msg)을 JSON으로 반환하세요.
     """
 
     completion = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[{"role": "system", "content": "너는 수의사 보조 챗봇이다."},
+        messages=[{"role": "system", "content": "너는 반려동물의 일상 건강과 습관을 함께 관리하는 케어 어시스턴트이다. 사용자와 대화하면서 반려견의 건강 상태를 분석하고, 필요한 조언을 제공한다."},
                   {"role": "user", "content": prompt}],
         response_format={ "type": "json_object" }  # JSON 형태 강제
     )
 
     data = completion.choices[0].message.content
-    return DogHealth.model_validate_json(data)
+    print(f"Analyzed Dog Health Data: {data}")
+    return DogHealthResponse.model_validate_json(data)
