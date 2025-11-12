@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import os
 
 from models.dogHealth import DogHealth
-from models.dogHealthResponse import DogHealthResponse
+from models.communications import *
 from services.dogAnalyzer import analyze_dog_health
 
 load_dotenv()
@@ -16,6 +16,7 @@ app = FastAPI()
 
 class ChatRequest(BaseModel):
     message: str
+
 
 @app.post("/chat")
 def chat(req: ChatRequest):
@@ -32,7 +33,6 @@ def chat(req: ChatRequest):
     return {"reply": reply}
 
 @app.post("/analyze_dog_health")
-def analyze_health(req: DogHealthResponse):
+def analyze_health(req: DogHealthRequest):
     dog_health = analyze_dog_health(req)
-    #return {"dog_health": dog_health.model_dump()}
     return dog_health
