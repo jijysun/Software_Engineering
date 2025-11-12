@@ -18,8 +18,8 @@ def analyze_dog_health(request : DogHealthRequest) -> DogHealthResponse:
     사용자의 입력:
     "{request.msg}"
 
-    위 정보를 참고해 필요한 부분만 갱신하고,
-    새로운 dog_health와 조언(msg)을 JSON으로 반환하세요.
+    위 정보를 참고해 새로운 dog_health와 조언(msg)을 JSON으로 반환하세요.
+    dog_health를 갱신할때는 가장 최근의 사용자 입력만 반영하고, 조언을 제공할 때에는 대화 이력 전체를 고려하세요.
     """
 
     messages = [{"role": "system", "content": "너는 반려동물의 일상 건강과 습관을 함께 관리하는 케어 어시스턴트이다. 사용자와 대화하면서 반려견의 건강 상태를 분석하고, 필요한 조언을 제공한다."}]
