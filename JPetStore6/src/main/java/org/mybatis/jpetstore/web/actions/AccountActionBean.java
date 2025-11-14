@@ -87,6 +87,12 @@ public class AccountActionBean extends AbstractActionBean {
     account.setPassword(password);
   }
 
+  /*
+   * public String getEmail() { return account.getEmail(); }
+   * @Validate(required = true, on = { "newAccount", "editAccount" }) public void setEmail(String email) {
+   * account.setEmail(email); }
+   */
+
   public List<Product> getMyList() {
     return myList;
   }

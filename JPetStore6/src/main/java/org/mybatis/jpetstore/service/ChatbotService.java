@@ -21,6 +21,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 import org.json.JSONObject;
 
@@ -28,22 +29,23 @@ public class ChatbotService {
 
   public static String sendMessage(String message) {
     try {
-      // FastAPI 통신 설정
+      // FastAPI 서버와의 통신 설정
       URL url = new URL("http://127.0.0.1:8000/chat");
       HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
       conn.setRequestMethod("POST");
-      conn.setRequestProperty("Content-Type", "application/json; utf-8");
+      conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
       conn.setRequestProperty("Accept", "application/json");
       conn.setDoOutput(true);
-      conn.setConnectTimeout(60000); // 응답시간
+      conn.setConnectTimeout(60000);
       conn.setReadTimeout(60000);
 
       JSONObject json = new JSONObject();
       json.put("message", message);
 
+      // ✅ Modernizer가 요구하는 UTF-8 방식으로 수정
       try (OutputStream os = conn.getOutputStream()) {
-        byte[] input = json.toString().getBytes("utf-8");
+        byte[] input = json.toString().getBytes(StandardCharsets.UTF_8);
         os.write(input, 0, input.length);
       }
 
@@ -51,13 +53,17 @@ public class ChatbotService {
       InputStream is = (code >= 200 && code < 300) ? conn.getInputStream() : conn.getErrorStream();
 
       StringBuilder response = new StringBuilder();
-      try (BufferedReader br = new BufferedReader(new InputStreamReader(is, "utf-8"))) {
+      // ✅ 여기도 "utf-8" 대신 StandardCharsets.UTF_8 사용
+      try (BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
         String line;
-        while ((line = br.readLine()) != null)
+        while ((line = br.readLine()) != null) {
           response.append(line);
+        }
       }
-      if (code < 200 || code >= 300)
+
+      if (code < 200 || code >= 300) {
         return "Error HTTP " + code + ": " + response;
+      }
 
       JSONObject jsonResponse = new JSONObject(response.toString());
       return jsonResponse.getString("reply");
