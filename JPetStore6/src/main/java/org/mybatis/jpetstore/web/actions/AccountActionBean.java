@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2022 the original author or authors.
+ *    Copyright 2010-2025 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -88,6 +88,12 @@ public class AccountActionBean extends AbstractActionBean {
   public void setPassword(String password) {
     account.setPassword(password);
   }
+
+  /*
+   * public String getEmail() { return account.getEmail(); }
+   * @Validate(required = true, on = { "newAccount", "editAccount" }) public void setEmail(String email) {
+   * account.setEmail(email); }
+   */
 
   public List<Product> getMyList() {
     return myList;

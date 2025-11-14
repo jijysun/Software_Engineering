@@ -8,5 +8,7 @@
 .mvn/wrapper/maven-wrapper.jar
 *.releaseBackup
 *.properties
+# 예외 추가
+!.mvn/wrapper/maven-wrapper.properties
 .env
 .github/keys/
