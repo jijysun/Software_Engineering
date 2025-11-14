@@ -47,6 +47,8 @@ public class Account implements Serializable {
   private boolean bannerOption;
   private String bannerName;
 
+  private String info;
+
   public String getUsername() {
     return username;
   }
@@ -191,6 +193,11 @@ public class Account implements Serializable {
 
   public void setBannerName(String bannerName) {
     this.bannerName = bannerName;
+  }
+
+  // Setter 는 없어도 되는게, 서비스 로직 - 업데이트가 생길 예정이니 구현은 일단 안했습니다.
+  public String getInfo(){
+      return this.info;
   }
 
 }

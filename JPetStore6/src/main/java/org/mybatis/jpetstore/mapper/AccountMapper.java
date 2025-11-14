@@ -40,4 +40,6 @@ public interface AccountMapper {
 
   void updateSignon(Account account);
 
+  void updateInfo (String email, String newInfo);
+
 }

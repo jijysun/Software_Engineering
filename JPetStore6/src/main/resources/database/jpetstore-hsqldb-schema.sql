@@ -33,6 +33,7 @@ create table signon (
     constraint pk_signon primary key (username)
 );
 
+# 사용자 정보용 필드 "info" 추가
 create table account (
     userid varchar(80) not null,
     email varchar(80) not null,
@@ -46,6 +47,7 @@ create table account (
     zip varchar(20) not null,
     country varchar(20) not null,
     phone varchar(80) not null,
+    info text,
     constraint pk_account primary key (userid)
 );
 
