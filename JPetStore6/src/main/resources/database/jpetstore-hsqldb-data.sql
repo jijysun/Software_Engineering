@@ -33,7 +33,7 @@ create table SIGNON (
     constraint pk_signon primary key (username)
 );
 
-# 사용자 정보용 필드 "info" 추가
+
 create table ACCOUNT (
     userid varchar(80) not null,
     email varchar(80) not null,
@@ -47,7 +47,7 @@ create table ACCOUNT (
     zip varchar(20) not null,
     country varchar(20) not null,
     phone varchar(80) not null,
-    info text,
+    info clob,
     constraint pk_account primary key (userid)
 );
 
@@ -172,7 +172,6 @@ INSERT INTO SEQUENCE VALUES('ordernum', 1000);
 INSERT INTO SIGNON VALUES('j2ee','j2ee');
 INSERT INTO SIGNON VALUES('ACID','ACID');
 
-# 테스트 데이터 삽입 수정
 INSERT INTO ACCOUNT VALUES('j2ee','yourname@yourdomain.com','ABC', 'XYX', 'OK', '901 San Antonio Road', 'MS UCUP02-206', 'Palo Alto', 'CA', '94303', 'USA',  '555-555-5555', 'test_info');
 INSERT INTO ACCOUNT VALUES('ACID','acid@yourdomain.com','ABC', 'XYX', 'OK', '901 San Antonio Road', 'MS UCUP02-206', 'Palo Alto', 'CA', '94303', 'USA',  '555-555-5555', 'test_info');
 

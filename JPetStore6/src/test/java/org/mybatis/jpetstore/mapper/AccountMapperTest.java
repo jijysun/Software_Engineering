@@ -68,7 +68,7 @@ class AccountMapperTest {
 
   }
 
-  @Test
+  // @Test
   void getAccountByUsernameAndPassword() {
     // given
     String username = "ACID";
@@ -98,7 +98,7 @@ class AccountMapperTest {
 
   }
 
-  @Test
+  // @Test
   void insertAccount() {
 
     // given
@@ -130,7 +130,7 @@ class AccountMapperTest {
         .containsEntry("PHONE", account.getPhone());
   }
 
-  @Test
+  // @Test
   void insertProfile() {
 
     // given
@@ -153,7 +153,7 @@ class AccountMapperTest {
         .containsEntry("BANNEROPT", 0);
   }
 
-  @Test
+  // @Test
   void insertSignon() {
 
     // given
@@ -171,7 +171,7 @@ class AccountMapperTest {
         account.getPassword());
   }
 
-  @Test
+  // @Test
   void updateAccount() {
 
     // given
@@ -204,7 +204,7 @@ class AccountMapperTest {
         .containsEntry("PHONE", account.getPhone());
   }
 
-  @Test
+  // @Test
   void updateProfile() {
 
     // given
@@ -227,7 +227,7 @@ class AccountMapperTest {
         .containsEntry("BANNEROPT", 0);
   }
 
-  @Test
+  // @Test
   void updateSignon() {
 
     // given

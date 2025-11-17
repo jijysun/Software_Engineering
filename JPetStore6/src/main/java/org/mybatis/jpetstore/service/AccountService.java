@@ -73,8 +73,8 @@ public class AccountService {
   }
 
   @Transactional
-    public void updateInfo(String email, String newInfo){
-      accountMapper.updateInfo(email, newInfo);
+  public void updateInfo(String email, String info) {
+    accountMapper.updateInfo(email, info);
   }
 
 }
