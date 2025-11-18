@@ -13,3 +13,12 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+package src.main.java.org.mybatis.jpetstore.service;
+
+public class ChatbotService {
+  // public DogHealthResponse sendChat(DogHealthRequest req) {
+  // JSONObject payload = req.toJson();
+  // String json = ChatbotHttpClient.post("/ai/chat", payload);
+  // return DogHealthResponse.fromJson(json);
+  // }
+}

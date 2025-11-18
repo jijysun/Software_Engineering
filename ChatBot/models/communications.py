@@ -1,6 +1,11 @@
 from pydantic import BaseModel
 from models.dogHealth import DogHealth
 
+# 단순 메시지 요청(AI 그림생성)
+class ChatRequest(BaseModel):
+    message: str
+
+# 챗봇 대화 히스토리
 class ChatHistoryMessage(BaseModel):
     role: str
     content: str
