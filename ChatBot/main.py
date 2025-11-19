@@ -26,7 +26,7 @@ def recommendPet(req: ChatRequest):
 
 # 이미지 생성(개발중)
 @app.post("/image")
-def requestImage(req: ChatRequest):
+def requestImage(req: ImageRequest):
     image = generate_image(req)
     print(f"Image URL: {image}")
     return {"image_url": image}
