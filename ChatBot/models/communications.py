@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from models.dogHealth import DogHealth
 
-# 단순 메시지 요청(AI 그림생성)
+# 단순 메시지 요청(AI 그림생성, 반려동물 추천)
 class ChatRequest(BaseModel):
     message: str
 

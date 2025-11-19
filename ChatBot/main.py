@@ -8,7 +8,7 @@ from models.dogHealth import DogHealth
 from models.communications import *
 from services.dogAnalyzer import analyze_dog_health
 from services.imageGenerate import generate_image
-
+from services.petRecommend import recommend_pet
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -31,6 +31,13 @@ def chat(req: ChatRequest):
     return {"reply": reply}
 
 
+# 사용자 동물 추천(개발중)
+@app.post("/recommend_pet")
+def recommendPet(req: ChatRequest):
+    user_recommendation = recommend_pet(req)
+    print(f"User: {req.message}\nRecommendation: {user_recommendation}")
+    return {"recommendation": user_recommendation}
+
 # 이미지 생성(개발중)
 @app.post("/image")
 def requestImage(req: ChatRequest):
@@ -47,10 +54,6 @@ def analyzeDogHealth(req: DogHealthRequest):
 
 '''앞으로 구현 예정인 기능들'''
 
-# 사용자 동물 추천(예정)
-@app.post("/recommend_pet")
-def recommendPet(req: ChatRequest):
-    return req
 
 # 고양이 건강 분석(예정)
 @app.post("/analyze_cat_health")
