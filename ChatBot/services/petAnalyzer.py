@@ -18,7 +18,7 @@ def analyze_pet_health(request : PetHealthRequest) -> PetHealthResponse:
     사용자의 입력:
     "{request.msg}"
 
-    위 정보를 참고해 새로운 pet_health와 조언(msg)을 반드시 JSON으로 반환하세요.
+    위 정보를 참고해 새로운 pet_health와 조언(msg)을 반드시 JSON 형식으로 반환하세요.
     pet_health를 갱신할때는 가장 최근의 사용자 입력만 반영하고, breed에 따라 필요한 건강 상태만 선택적으로 갱신하세요.
     조언을 제공할 때에는 대화 이력 전체를 고려하세요.
     """
