@@ -37,6 +37,7 @@
           ACCOUNT.ZIP,
           ACCOUNT.COUNTRY,
           ACCOUNT.PHONE,
+          ACCOUNT.INFO,
           PROFILE.LANGPREF AS languagePreference,
           PROFILE.FAVCATEGORY AS favouriteCategoryId,
           PROFILE.MYLISTOPT AS listOption,
@@ -63,6 +64,7 @@
       ACCOUNT.ZIP,
       ACCOUNT.COUNTRY,
       ACCOUNT.PHONE,
+      ACCOUNT.INFO,
       PROFILE.LANGPREF AS languagePreference,
       PROFILE.FAVCATEGORY AS favouriteCategoryId,
       PROFILE.MYLISTOPT AS listOption,
@@ -133,7 +135,7 @@
     <update id = "updateInfo" parameterType="Account">
         update account
         set info = CONCAT(info, #{newInfo})
-        where email = #{email}
+        where userid = #{username}
 
     </update>
 

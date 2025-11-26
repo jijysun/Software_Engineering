@@ -15,32 +15,22 @@
  */
 package org.mybatis.jpetstore.mapper;
 
+import java.util.List;
+
 import org.apache.ibatis.annotations.Param;
-import org.mybatis.jpetstore.domain.Account;
+import org.mybatis.jpetstore.domain.ChatMessage;
 
-/**
- * The Interface AccountMapper.
- *
- * @author Eduardo Macarron
- */
-public interface AccountMapper {
+public interface ChatMapper {
 
-  Account getAccountByUsername(String username);
+  void insertChatMessage(ChatMessage message);
 
-  Account getAccountByUsernameAndPassword(String username, String password);
+  List<ChatMessage> getMessagesByUserId(String userId);
 
-  void insertAccount(Account account);
+  // ✅ userId + mode 로 가장 최신 메시지 1개 조회
+  ChatMessage getLatestByUserIdAndMode(@Param("userId") String userId, @Param("mode") int mode);
 
-  void insertProfile(Account account);
+  // ✅ 최근 대화 N개
+  List<ChatMessage> getRecentMessagesByUserId(@Param("userId") String userId, @Param("limit") int limit);
 
-  void insertSignon(Account account);
-
-  void updateAccount(Account account);
-
-  void updateProfile(Account account);
-
-  void updateSignon(Account account);
-
-  void updateInfo(@Param("username") String username, @Param("newInfo") String newInfo);
 
 }
