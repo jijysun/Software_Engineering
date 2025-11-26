@@ -56,3 +56,21 @@ public class ChatbotHttpClient {
     }
   }
 }
+
+// vvvvvv 최준이 추가함 vvvvvv
+
+@WebServlet("/chat/analyze_health")
+public class AnalyzeHealthServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String body = req.getReader().lines().collect(Collectors.joining());
+        JSONObject payload = new JSONObject(body);
+
+        // FastAPI로 전달
+        String result = ChatbotHttpClient.post("/analyze_health", payload);
+
+        resp.setContentType("application/json; charset=UTF-8");
+        resp.getWriter().write(result);
+    }
+}
+
+// ^^^^^^ 최준이 추가함 ^^^^^^
