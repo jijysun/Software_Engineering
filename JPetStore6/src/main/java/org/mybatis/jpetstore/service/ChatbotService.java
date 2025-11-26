@@ -26,7 +26,6 @@ import org.mybatis.jpetstore.service.dto.PythonChatRequestDto;
 import org.mybatis.jpetstore.service.dto.PythonChatResponseDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.mybatis.jpetstore.service.ChatbotHttpClient;
 
 @Service
 public class ChatbotService {
@@ -36,6 +35,45 @@ public class ChatbotService {
 
   @Autowired
   private AccountMapper accountMapper;
+
+  // DB에 저장할 프로필 최대 길이 (너가 적당히 결정, 예: 4000자)
+  private static final int MAX_PROFILE_LEN = 4000;
+
+  // GPT에 보낼 때 사용할 최대 길이 (프로필/히스토리)
+  private static final int MAX_PROFILE_CHARS_FOR_AI = 2000;
+  private static final int MAX_HISTORY_CHARS_FOR_AI = 4000;
+
+  // 불필요한 공백/개행 정리 + 최대 길이 제한
+  private String normalizeText(String s, int maxLen) {
+    if (s == null) {
+      return null;
+    }
+
+    String result = s.trim(); // 앞뒤 공백 제거
+    result = result.replaceAll("[ \\t]+", " "); // 연속 공백/탭 → 한 칸
+    result = result.replaceAll("\\n{3,}", "\n\n"); // 개행 3개 이상 → 2개
+
+    if (maxLen > 0 && result.length() > maxLen) {
+      // 너무 길면 뒤에서 maxLen 글자만 사용
+      result = result.substring(result.length() - maxLen);
+    }
+
+    return result;
+  }
+
+  // ACCOUNT.INFO 를 DB에 저장할 때 길이 제한
+  private String trimProfile(String info) {
+    if (info == null) {
+      return null;
+    }
+    if (info.length() <= MAX_PROFILE_LEN) {
+      return info;
+    }
+    // 오래된 내용은 버리고, 뒤쪽 최신 MAX_PROFILE_LEN 글자만 남김
+    return info.substring(info.length() - MAX_PROFILE_LEN);
+  }
+
+  // 🔼🔼🔼 여기까지 추가 🔼🔼🔼
 
   /**
    * 채팅 한 턴 처리
@@ -107,6 +145,10 @@ public class ChatbotService {
       }
       conversationHistory = sb.toString();
     }
+    // 🔽🔽🔽 여기 추가 : GPT로 보내기 전에 정제 + 길이 제한
+    profileInfo = normalizeText(profileInfo, MAX_PROFILE_CHARS_FOR_AI);
+    conversationHistory = normalizeText(conversationHistory, MAX_HISTORY_CHARS_FOR_AI);
+    // 🔼🔼🔼
 
     if (mode != null && mode == 3) {
 
@@ -176,11 +218,17 @@ public class ChatbotService {
       msg.setAnswer(resDto.getAnswer()); // GPT가 추천해준 동물 설명
     } else {
       // 나머지 모드(1,3,null)는 기존 방식 유지
-      msg.setQuestion(resDto.getAiQuestion() != null ? resDto.getAiQuestion() : "");
-      msg.setAnswer(userInput);
+      msg.setQuestion(userInput);
+      msg.setAnswer(resDto.getAnswer());
     }
 
     chatMapper.insertChatMessage(msg);
+
+    // 🔽🔽🔽 여기 추가 : 사용자별 최근 100개만 유지
+    if (userId != null && !"ANONYMOUS".equals(userId)) {
+      chatMapper.deleteOldMessagesByUserId(userId, 100);
+    }
+    // 🔼🔼🔼
 
     // 2-5) 모드 2에서도 프로필은 여기서 수정 안 함 (모드 1에서만 업데이트)
     return resDto;
@@ -223,6 +271,10 @@ public class ChatbotService {
       mergedInfo = oldInfo + System.lineSeparator() + newBlock;
     }
 
+    // 🔽🔽🔽 여기 추가 : 너무 길면 뒤에서만 남기기
+    mergedInfo = trimProfile(mergedInfo);
+    // 🔼🔼🔼
+
     // 5. ACCOUNT.INFO 업데이트
     accountMapper.updateInfo(userId, mergedInfo);
 
@@ -246,6 +298,5 @@ public class ChatbotService {
   public List<ChatMessage> getMessagesByUserId(String userId) {
     return chatMapper.getMessagesByUserId(userId);
   }
-
 
 }

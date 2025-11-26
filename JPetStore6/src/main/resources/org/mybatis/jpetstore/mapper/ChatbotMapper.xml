@@ -81,4 +81,17 @@
             LIMIT #{limit}
     </select>
 
+    <!-- 🔽🔽🔽 여기 추가 : 사용자별 최신 keep개만 남기고 나머지 삭제 -->
+    <delete id="deleteOldMessagesByUserId" parameterType="map">
+        DELETE FROM CHAT_MESSAGE
+        WHERE USER_ID = #{userId}
+          AND ID NOT IN (
+            SELECT ID
+            FROM CHAT_MESSAGE
+            WHERE USER_ID = #{userId}
+            ORDER BY CREATED_AT DESC
+            LIMIT #{keep}
+            )
+    </delete>
+    <!-- 🔼🔼🔼 -->
 </mapper>
