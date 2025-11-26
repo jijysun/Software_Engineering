@@ -200,4 +200,9 @@ public class Account implements Serializable {
     return this.info;
   }
 
+  // 사용자의 로그인 정보를 업데이트하기 위해 사용
+  public void setInfo(String info) {
+    this.info = info;
+  }
+
 }
