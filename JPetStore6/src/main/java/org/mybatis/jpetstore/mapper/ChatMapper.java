@@ -32,5 +32,6 @@ public interface ChatMapper {
   // ✅ 최근 대화 N개
   List<ChatMessage> getRecentMessagesByUserId(@Param("userId") String userId, @Param("limit") int limit);
 
-
+  // ✅ 사용자별로 최근 keep개만 남기고 나머지 삭제
+  void deleteOldMessagesByUserId(@Param("userId") String userId, @Param("keep") int keep);
 }
