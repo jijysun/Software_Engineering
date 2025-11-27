@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+       Copyright 2010-2025 the original author or authors.
+
+       Licensed under the Apache License, Version 2.0 (the "License");
+       you may not use this file except in compliance with the License.
+       You may obtain a copy of the License at
+
+          https://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing, software
+       distributed under the License is distributed on an "AS IS" BASIS,
+       WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+       See the License for the specific language governing permissions and
+       limitations under the License.
+
+-->
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.mybatis.jpetstore.mapper.ChatMapper">
+
+    <resultMap id="chatMessageResult" type="org.mybatis.jpetstore.domain.ChatMessage">
+        <id     column="ID"         property="id"/>
+        <result column="USER_ID"    property="userId"/>
+        <result column="QUESTION"   property="question"/>
+        <result column="ANSWER"     property="answer"/>
+        <result column="MODE"       property="mode"/>
+        <result column="CREATED_AT" property="createdAt"/>
+    </resultMap>
+
+    <insert id="insertChatMessage" parameterType="org.mybatis.jpetstore.domain.ChatMessage">
+        INSERT INTO CHAT_MESSAGE (
+            USER_ID, QUESTION, ANSWER, MODE, CREATED_AT
+        ) VALUES (
+                     #{userId},
+                     #{question},
+                     #{answer},
+                     #{mode},
+                     CURRENT_TIMESTAMP
+                 )
+    </insert>
+
+    <select id="getMessagesByUserId"
+            parameterType="string"
+            resultMap="chatMessageResult">
+        SELECT
+            ID,
+            USER_ID,
+            QUESTION,
+            ANSWER,
+            MODE,
+            CREATED_AT
+        FROM CHAT_MESSAGE
+        WHERE USER_ID = #{userId}
+        ORDER BY CREATED_AT ASC
+    </select>
+
+    <select id="getLatestByUserIdAndMode"
+            parameterType="map"
+            resultMap="chatMessageResult">
+        SELECT
+            ID, USER_ID, QUESTION, ANSWER, MODE, CREATED_AT
+        FROM CHAT_MESSAGE
+        WHERE USER_ID = #{userId}
+          AND MODE = #{mode}
+        ORDER BY CREATED_AT DESC
+            FETCH FIRST 1 ROW ONLY
+    </select>
+
+    <select id="getRecentMessagesByUserId"
+            parameterType="map"
+            resultMap="chatMessageResult">
+        SELECT
+            ID, USER_ID, QUESTION, ANSWER, MODE, CREATED_AT
+        FROM CHAT_MESSAGE
+        WHERE USER_ID = #{userId}
+        ORDER BY CREATED_AT DESC
+            LIMIT #{limit}
+    </select>
+
+    <!-- 🔽🔽🔽 여기 추가 : 사용자별 최신 keep개만 남기고 나머지 삭제 -->
+    <delete id="deleteOldMessagesByUserId" parameterType="map">
+        DELETE FROM CHAT_MESSAGE
+        WHERE USER_ID = #{userId}
+          AND ID NOT IN (
+            SELECT ID
+            FROM CHAT_MESSAGE
+            WHERE USER_ID = #{userId}
+            ORDER BY CREATED_AT DESC
+            LIMIT #{keep}
+            )
+    </delete>
+    <!-- 🔼🔼🔼 -->
+</mapper>

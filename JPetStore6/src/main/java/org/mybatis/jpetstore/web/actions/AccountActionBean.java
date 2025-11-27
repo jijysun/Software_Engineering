@@ -47,6 +47,7 @@ public class AccountActionBean extends AbstractActionBean {
   private static final String NEW_ACCOUNT = "/WEB-INF/jsp/account/NewAccountForm.jsp";
   private static final String EDIT_ACCOUNT = "/WEB-INF/jsp/account/EditAccountForm.jsp";
   private static final String SIGNON = "/WEB-INF/jsp/account/SignonForm.jsp";
+  private static final String ALL_ITEM = "/WEB-INF/jsp/catalog/AllItems.jsp"; // 자기소개 업데이트 후 리다이렉션
 
   private static final List<String> LANGUAGE_LIST;
   private static final List<String> CATEGORY_LIST;
@@ -59,6 +60,7 @@ public class AccountActionBean extends AbstractActionBean {
   private Account account = new Account();
   private List<Product> myList;
   private boolean authenticated;
+  private String info; // Stripes 바인딩용
 
   static {
     LANGUAGE_LIST = Collections.unmodifiableList(Arrays.asList("english", "japanese"));
@@ -87,6 +89,12 @@ public class AccountActionBean extends AbstractActionBean {
     account.setPassword(password);
   }
 
+  /*
+   * public String getEmail() { return account.getEmail(); }
+   * @Validate(required = true, on = { "newAccount", "editAccount" }) public void setEmail(String email) {
+   * account.setEmail(email); }
+   */
+
   public List<Product> getMyList() {
     return myList;
   }
@@ -101,6 +109,15 @@ public class AccountActionBean extends AbstractActionBean {
 
   public List<String> getCategories() {
     return CATEGORY_LIST;
+  }
+
+  // getter, setter
+  public void setInfo(String info) {
+    this.info = info;
+  }
+
+  public String getInfo() {
+    return info;
   }
 
   public Resolution newAccountForm() {
@@ -203,6 +220,24 @@ public class AccountActionBean extends AbstractActionBean {
     account = new Account();
     myList = null;
     authenticated = false;
+  }
+
+  /**
+   * 자기소개 업데이트 함수 입니다 일단 아이템 쪽 보게 리다이렉션 했고, 이 Resolution이 Stripes 세션 객체? 인 거 같아서 이렇
+   */
+  public Resolution updateInfo() {
+    if (!isAuthenticated() || account.getEmail() == null) {
+      setMessage("Signon required or account details missing.");
+      return new ForwardResolution(SIGNON);
+    }
+
+    else if (info != null && !info.trim().isEmpty()) {
+      accountService.updateInfo(account.getEmail(), info);
+      setMessage("Info updated successfully: " + info);
+    } else {
+      setMessage("New info cannot be empty.");
+    }
+    return new ForwardResolution(EDIT_ACCOUNT);
   }
 
 }

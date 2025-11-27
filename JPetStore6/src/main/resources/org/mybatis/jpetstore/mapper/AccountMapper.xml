@@ -37,6 +37,7 @@
           ACCOUNT.ZIP,
           ACCOUNT.COUNTRY,
           ACCOUNT.PHONE,
+          ACCOUNT.INFO,
           PROFILE.LANGPREF AS languagePreference,
           PROFILE.FAVCATEGORY AS favouriteCategoryId,
           PROFILE.MYLISTOPT AS listOption,
@@ -63,6 +64,7 @@
       ACCOUNT.ZIP,
       ACCOUNT.COUNTRY,
       ACCOUNT.PHONE,
+      ACCOUNT.INFO,
       PROFILE.LANGPREF AS languagePreference,
       PROFILE.FAVCATEGORY AS favouriteCategoryId,
       PROFILE.MYLISTOPT AS listOption,
@@ -128,5 +130,13 @@
     INSERT INTO SIGNON (PASSWORD,USERNAME)
     VALUES (#{password}, #{username})
   </insert>
+
+    <!-- 일단 이메일? 방식으로 작성 -->
+    <update id = "updateInfo" parameterType="Account">
+        update account
+        set info = CONCAT(info, #{newInfo})
+        where userid = #{username}
+
+    </update>
 
 </mapper>

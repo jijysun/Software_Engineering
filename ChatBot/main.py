@@ -1,10 +1,16 @@
 from fastapi import FastAPI
+from pydantic import BaseModel
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
 
-from services.dogAnalyzer import analyze_dog_health
-from models.chat import ChatRequest, ChatResponse  # ✅ 새로 추가
+from models.chat import ChatRequest, ChatResponse
+from models.petHealth import petHealth
+from models.communications import ImageRequest, PetHealthRequest 
+
+from services.petAnalyzer import analyze_pet_health
+from services.imageGenerate import generate_image
+from services.petRecommend import recommend_pet
 
 load_dotenv()
 
@@ -121,37 +127,25 @@ def chat(req: ChatRequest):
 
         prompt_for_image = call_gpt(system, user_prompt)
 
-        # 3) 실제 이미지 생성 (URL만 받기)
-        try:
-            img_result = client.images.generate(
-                model="gpt-image-1",
-                prompt=prompt_for_image,
-                size="1024x1024",
-            )
-            image_url = img_result.data[0].url
+        # 다른 개발자 코드 재사용 (ImageRequest는 models.communications 쪽에 있다고 가정)
+        image_req = ImageRequest(
+            message=prompt_for_image,
+            user_info=profile_info or ""
+        )
+        image_url = generate_image(image_req)
 
-            answer_text = (
-                "추천해 드린 반려동물과 함께 있는 장면을 이미지로 생성했어요.\n"
-                "아래 URL의 이미지를 확인해 주세요."
-            )
+        answer_text = (
+            "추천해 드린 반려동물과 함께 있는 장면을 이미지로 생성했어요.\n"
+            "아래 URL의 이미지를 확인해 주세요."
+        )
 
-            return ChatResponse(
-                answer=answer_text,
-                ai_question=None,
-                profile_info=None,
-                image_url=image_url,
-            )
+        return ChatResponse(
+            answer=answer_text,
+            ai_question=None,
+            profile_info=None,
+            image_url=image_url,
+        )
 
-        except Exception as e:
-            # ❗ 들여쓰기 수정됨
-            print("❌ 이미지 생성 중 에러:", repr(e))
-
-            return ChatResponse(
-                answer=f"이미지 생성 중 오류가 발생했습니다: {e}",
-                ai_question=None,
-                profile_info=None,
-                image_url=None,
-            )
 
 
     # ----- 기본 모드(None): 일반 상담 -----
@@ -159,10 +153,9 @@ def chat(req: ChatRequest):
         system = (
             base_system
             + "너는 반려동물 입양을 도와주는 친절한 상담 챗봇이야.\n"
-    "사용자가 제공한 프로필 정보는 여러 줄일 수 있지만,"
-    "항상 가장 마지막 질문/답변 블록이 최신 정보다.\n"
-    "반드시 마지막 블록의 값만 사용하고, 이전 내용은 무시해야 한다.\n"
-
+            "사용자가 제공한 프로필 정보는 여러 줄일 수 있지만,"
+            "항상 가장 마지막 질문/답변 블록이 최신 정보다.\n"
+            "반드시 마지막 블록의 값만 사용하고, 이전 내용은 무시해야 한다.\n"
         )
 
         if profile_info:
@@ -183,7 +176,24 @@ def chat(req: ChatRequest):
         )
 
 
-@app.post("/analyze_dog_health")
-def analyze_health(req: ChatRequest):
-    dog_health = analyze_dog_health(req.message)
-    return {"dog_health": dog_health.model_dump()}
+# 사용자 동물 추천
+@app.post("/recommend_pet")
+def recommendPet(req: ChatRequest):
+    user_recommendation = recommend_pet(req)
+    print(f"User: {req.message}\nRecommendation: {user_recommendation}")
+    return {"recommendation": user_recommendation}
+
+# 이미지 생성(개발중)
+@app.post("/image")
+def requestImage(req: ImageRequest):
+    image = generate_image(req)
+    print(f"Image URL: {image}")
+    return {"image_url": image}
+
+# 반려동물 건강 분석
+@app.post("/analyze_health")
+def analyzePetHealth(req: PetHealthRequest):
+    pet_health = analyze_pet_health(req)
+    print(f"Pet Health Analysis Result: {pet_health}")
+    return pet_health
+

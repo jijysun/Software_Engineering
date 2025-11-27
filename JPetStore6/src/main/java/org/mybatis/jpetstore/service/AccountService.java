@@ -72,4 +72,9 @@ public class AccountService {
         .ifPresent(password -> accountMapper.updateSignon(account));
   }
 
+  @Transactional
+  public void updateInfo(String email, String info) {
+    accountMapper.updateInfo(email, info);
+  }
+
 }
