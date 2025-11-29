@@ -133,8 +133,8 @@
 
     <!-- 일단 이메일? 방식으로 작성 -->
     <update id = "updateInfo" parameterType="Account">
-        update account
-        set info = CONCAT(info, #{newInfo})
+        UPDATE ACCOUNT
+        SET INFO = #{newInfo}
         where userid = #{username}
 
     </update>

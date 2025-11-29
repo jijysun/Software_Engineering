@@ -126,6 +126,12 @@ public class ChatbotService {
     String profileInfo = null;
     if (userId != null && !userId.isEmpty()) {
       Account account = accountMapper.getAccountByUsername(userId);
+      /* //////////////////////////////////////////////// */
+      // 테스트를 위한 로그 확인
+      System.out.println("[DEBUG] handleChat() userId = " + userId);
+      System.out.println("[DEBUG] handleChat() account = " + account);
+      System.out.println("[DEBUG] handleChat() account.info = " + (account != null ? account.getInfo() : "null"));
+      /* ///////////////////////////////////// */
       if (account != null) {
         profileInfo = account.getInfo();
       }
@@ -177,9 +183,21 @@ public class ChatbotService {
     }
 
     // 2-2) Python으로 보낼 DTO 만들기
+    // 🔹 2-2) Python으로 보낼 메시지 구성 (특히 모드3일 때 Q/A 합치기)
+    String messageForAi = userInput;
+
+    // 3번 모드이면서 프론트에서 고정 질문을 보내준 경우
+    if (mode != null && mode == 3 && questionFromFront != null && !questionFromFront.trim().isEmpty()) {
+
+      String q = questionFromFront.trim();
+      String a = userInput != null ? userInput.trim() : "";
+
+      messageForAi = "[이미지 세부 설정]\n" + "질문: " + q + "\n" + "사용자 답변: " + a + "\n";
+    }
+
     PythonChatRequestDto reqDto = new PythonChatRequestDto();
     reqDto.setUserId(userId);
-    reqDto.setMessage(userInput);
+    reqDto.setMessage(messageForAi);
     reqDto.setMode(mode);
     reqDto.setProfileInfo(profileInfo);
 
