@@ -126,12 +126,6 @@ public class ChatbotService {
     String profileInfo = null;
     if (userId != null && !userId.isEmpty()) {
       Account account = accountMapper.getAccountByUsername(userId);
-      /* //////////////////////////////////////////////// */
-      // 테스트를 위한 로그 확인
-      System.out.println("[DEBUG] handleChat() userId = " + userId);
-      System.out.println("[DEBUG] handleChat() account = " + account);
-      System.out.println("[DEBUG] handleChat() account.info = " + (account != null ? account.getInfo() : "null"));
-      /* ///////////////////////////////////// */
       if (account != null) {
         profileInfo = account.getInfo();
       }
