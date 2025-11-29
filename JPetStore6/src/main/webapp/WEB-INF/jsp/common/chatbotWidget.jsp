@@ -191,7 +191,6 @@
     </div>
 </div>
 
-
 <script>
     (function () {
         const toggleBtn = document.getElementById("chatbot-toggle-btn");
@@ -201,9 +200,31 @@
         const sendBtn = document.getElementById("chatbot-send-btn");
         const quickBtns = document.querySelectorAll(".chatbot-quick-btn");
 
-        let currentMode = null;
+        let currentMode = null;   // "PROFILE" / "RECOMMEND" / "IMAGE" / null
         let chatHistory = [];
         let isOpen = false;
+
+        // 🔒 공통 요청 제어 플래그
+        let isRequestInFlight = false;
+        let lastRequestTime = 0;
+        const REQUEST_COOLDOWN_MS = 1000; // 1초
+
+        // ✅ "스크롤이 한 번이라도 복원된 이후에만" 저장하기 위한 플래그
+        let scrollRestored = false;
+
+
+        /* ------------------------------
+           0. 스크롤 위치 저장
+           ------------------------------ */
+        messagesDiv.addEventListener("scroll", () => {
+            // 아직 복원되기 전이면 저장하지 않음 (0으로 덮어쓰는 것 방지)
+            if (!scrollRestored) return;
+
+            sessionStorage.setItem(
+                "jpetstore_chat_scroll",
+                String(messagesDiv.scrollTop)
+            );
+        });
 
         /* ------------------------------
            1. 랜덤 질문 목록(PROFILE)
@@ -256,7 +277,8 @@
                 if (m.type === "png") appendImageBubble(m.url, false);
                 else appendTextBubble(m.content, m.role, false);
             }
-            finalizeScroll();
+            // ✅ 저장된 스크롤 위치 복원
+            restoreScroll();
         }
 
         /* ------------------------------
@@ -264,7 +286,7 @@
            ------------------------------ */
         async function loadServerChatHistory() {
             try {
-                const resp = await fetch("<%=request.getContextPath()%>/api/chat/history", {
+                const resp = await fetch("<%=request.getContextPath()%>/api/chat/history.action", {
                     method: "GET"
                 });
 
@@ -276,38 +298,68 @@
             }
         }
 
-        //여기에 created_At을 어떻게 처리할지 결정할 것 API보고
         async function initChatFromServer() {
             const loadedFlag = sessionStorage.getItem("chatHistoryLoadedFromServer");
 
+            // 이미 한 번 서버 기록을 불러온 적 있으면, 세션스토리지 것만 사용
             if (loadedFlag === "true") {
                 loadLocalHistory();
                 return;
             }
 
-            const logs = await loadServerChatHistory();
-            if (!logs || logs.length === 0) {
+            const logsObj = await loadServerChatHistory();
+
+            // 응답이 없거나 에러 나면 로컬 히스토리만 사용
+            if (!logsObj || typeof logsObj !== "object") {
                 loadLocalHistory();
                 return;
             }
 
-            // 🔥 created_at 기준으로 오름차순 정렬 (과거 → 최근)
-            // logs.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            console.log("history response >>>", logsObj);
+
+            // mode별 배열을 하나로 합치기
+            const allLogs = [
+                ...(logsObj.normal || []),
+                ...(logsObj.profile || []),
+                ...(logsObj.recommend || []),
+                ...(logsObj.image || [])
+            ];
+
+            if (allLogs.length === 0) {
+                loadLocalHistory();
+                return;
+            }
+
+            // created_at 기준으로 과거 → 최근 정렬
+            allLogs.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
             messagesDiv.innerHTML = "";
             chatHistory = [];
 
-            for (const log of logs) {
-                appendTextBubble(log.question, "assistant", false);
-                chatHistory.push({ role: "assistant", type: "text", content: log.question });
+            for (const log of allLogs) {
+                // question → 챗봇(assistant) 말풍선
+                if (log.question && log.question.trim() !== "") {
+                    appendTextBubble(log.question, "assistant", false);
+                    chatHistory.push({
+                        role: "assistant",
+                        type: "text",
+                        content: log.question
+                    });
+                }
 
+                // answer → 사용자(user) 말풍선
                 if (log.answer && log.answer.trim() !== "") {
                     appendTextBubble(log.answer, "user", false);
-                    chatHistory.push({ role: "user", type: "text", content: log.answer });
+                    chatHistory.push({
+                        role: "user",
+                        type: "text",
+                        content: log.answer
+                    });
                 }
             }
 
-            finalizeScroll();
+            // ✅ 서버에서 처음 불러올 때도 스크롤 복원
+            restoreScroll();
             saveHistory();
             sessionStorage.setItem("chatHistoryLoadedFromServer", "true");
         }
@@ -321,7 +373,7 @@
             div.textContent = text;
             messagesDiv.appendChild(div);
             if (scroll) finalizeScroll();
-            return div;        // 🔥 수정: div 반환
+            return div;
         }
 
         function appendImageBubble(url, scroll = true) {
@@ -332,50 +384,133 @@
             div.appendChild(img);
             messagesDiv.appendChild(div);
             if (scroll) finalizeScroll();
-            return div;        // 🔥 수정: div 반환
+            return div;
         }
 
         function finalizeScroll() {
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
+        // ✅ 스크롤 위치 복원 함수
+        function restoreScroll() {
+            const raw = sessionStorage.getItem("jpetstore_chat_scroll");
+
+            if (raw) {
+                const pos = parseInt(raw, 10);
+                // 0 이거나 숫자가 아니면 그냥 맨 아래로
+                if (!Number.isNaN(pos) && pos > 0) {
+                    messagesDiv.scrollTop = pos;
+                } else {
+                    finalizeScroll();
+                }
+            } else {
+                // 저장된 값이 없으면 기본은 "맨 아래"
+                finalizeScroll();
+            }
+
+            // 이제부터는 scroll 이벤트에서 저장해도 됨
+            scrollRestored = true;
+        }
+
+        // 🔒 버튼 enable/disable
+        function setButtonsDisabled(disabled) {
+            sendBtn.disabled = disabled;
+            quickBtns.forEach(btn => (btn.disabled = disabled));
+        }
+
+        // 🔒 새로운 요청을 보내도 되는지 체크 + 플래그 셋업
+        function canSendNewRequest() {
+            const now = Date.now();
+
+            if (isRequestInFlight) {
+                console.log("요청 처리중...");
+                return false;
+            }
+
+            if (now - lastRequestTime < REQUEST_COOLDOWN_MS) {
+                console.log("요청 쿨다운 중...");
+                return false;
+            }
+
+            isRequestInFlight = true;
+            lastRequestTime = now;
+            setButtonsDisabled(true);
+            return true;
+        }
+
+        // 🔓 요청 종료 처리
+        function finishRequest() {
+            isRequestInFlight = false;
+            setButtonsDisabled(false);
+        }
+
         toggleBtn.addEventListener("click", () => {
             isOpen = !isOpen;
             panel.style.display = isOpen ? "flex" : "none";
+
+            // ✅ 패널을 열 때마다 스크롤 위치 복원
+            if (isOpen) {
+                restoreScroll();
+            }
+
             saveOpenState();
         });
 
         /* ------------------------------
-           5. 서버 요청 (chat/log)
+           5. Chatbot API 호출 함수
+              - POST /actions/Chatbot.action
+              - form-urlencoded (mode, question, answer)
            ------------------------------ */
-        async function sendModeLog(mode, question, answer) {
-            const resp = await fetch("<%=request.getContextPath()%>/api/chat/log", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ mode, question, answer })
-            });
 
-            if (!resp.ok) throw new Error("chat/log 실패");
-            return await resp.json();   // {mode, answer}
+        function mapModeToInt(mode) {
+            if (mode === "PROFILE") return 1;
+            if (mode === "RECOMMEND") return 2;
+            if (mode === "IMAGE") return 3;
+            return null; // 일반 채팅
         }
 
+        async function sendChatRequest(mode, question, answer) {
+            const params = new URLSearchParams();
+
+            const modeInt = typeof mode === "number" ? mode : mapModeToInt(mode);
+            if (modeInt != null) {
+                params.append("mode", String(modeInt));
+            }
+            if (answer && answer.trim() !== "") {
+                params.append("answer", answer.trim());
+            }
+            if (question && question.trim() !== "") {
+                params.append("question", question.trim());
+            }
+
+            const resp = await fetch("<%=request.getContextPath()%>/actions/Chatbot.action", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                },
+                body: params.toString()
+            });
+
+            if (!resp.ok) throw new Error("Chatbot API 실패");
+            return await resp.json();  // { answer, imageUrl, nextQuestion }
+        }
 
         /* ------------------------------
            6. 버튼 클릭 처리 (PROFILE / RECOMMEND / IMAGE)
            ------------------------------ */
         quickBtns.forEach(btn => {
             btn.addEventListener("click", async () => {
-                const mode = btn.dataset.mode;
-                let msg = "";
+                const mode = btn.dataset.mode;    // "PROFILE" / "RECOMMEND" / "IMAGE"
+                const presetMsg = btn.dataset.msg || "";
                 currentMode = mode;
 
-                /* PROFILE */
+                /* PROFILE: 질문만 띄우고, 다음 입력 때 mode=1 로 전송 */
                 if (mode === "PROFILE") {
                     if (remainingProfileQuestions.length === 0)
                         remainingProfileQuestions = [...profileQuestions];
 
                     const idx = Math.floor(Math.random() * remainingProfileQuestions.length);
-                    msg = remainingProfileQuestions[idx];
+                    const msg = remainingProfileQuestions[idx];
                     remainingProfileQuestions.splice(idx, 1);
 
                     sessionStorage.setItem("last_profile_question", msg);
@@ -386,10 +521,11 @@
                     return;
                 }
 
-                /* IMAGE */
+                /* IMAGE: 안내 문구 먼저, 다음 입력 때 mode=3 로 전송 */
                 if (mode === "IMAGE") {
-                    msg = "지금까지의 너의 정보를 바탕으로 반려동물과 함께할 너의 미래를 그려줄께!! 어떤 동물을 그려줄까?";
-                    sessionStorage.setItem("last_image_question", "동물 그려줄까?");
+                    const msg = "지금까지의 너의 정보를 바탕으로 반려동물과 함께할 너의 미래를 그려줄께!! 어떤 동물을 그려줄까?";
+                    // 서버에 넘길 question 텍스트 (고정 질문)
+                    sessionStorage.setItem("last_image_question", "이미지에 어떤 분위기와 스타일을 원하시나요?");
 
                     appendTextBubble(msg, "assistant");
                     chatHistory.push({ role: "assistant", type: "text", content: msg });
@@ -397,30 +533,49 @@
                     return;
                 }
 
-                /* RECOMMEND */
+                /* RECOMMEND: 바로 mode=2로 요청 보내기 */
                 if (mode === "RECOMMEND") {
-                    msg = "너의 데이터를 기반으로 추천해줄게";
-                    currentMode = null;
 
-                    appendTextBubble(msg, "assistant");
-                    chatHistory.push({ role: "assistant", type: "text", content: msg });
+                    // 🔒 서버 요청 가능 여부 체크
+                    if (!canSendNewRequest()) {
+                        return;
+                    }
+
+                    const userMsg = presetMsg || "저에게 맞는 반려동물을 추천해줘";
+                    appendTextBubble(userMsg, "user");
+                    chatHistory.push({ role: "user", type: "text", content: userMsg });
                     saveHistory();
 
-                    // 🔥 서버 요청 후 답변 출력
+                    currentMode = null;  // 추천은 단발 요청
+
                     const loading = appendTextBubble("...", "assistant");
                     try {
-                        const data = await sendModeLog("RECOMMEND", msg, "");
-                        loading.textContent = data.answer || "응답이 비어 있어요 😢";
+                        const data = await sendChatRequest(2, "", userMsg);
+                        const answer = data.answer || "추천 결과가 비어 있어요 😢";
+                        loading.textContent = answer;
 
                         chatHistory.push({
                             role: "assistant",
                             type: "text",
-                            content: data.answer
+                            content: answer
                         });
+
+                        if (data.imageUrl) {
+                            appendImageBubble(data.imageUrl);
+                            chatHistory.push({
+                                role: "assistant",
+                                type: "png",
+                                url: data.imageUrl
+                            });
+                        }
+
                         saveHistory();
 
                     } catch (e) {
+                        console.error(e);
                         loading.textContent = "추천중 오류 발생";
+                    } finally {
+                        finishRequest();
                     }
                 }
             });
@@ -429,71 +584,75 @@
 
         /* ------------------------------
            7. 사용자 입력 처리 (sendMessage)
+              - 일반 채팅: mode 없음
+              - PROFILE: mode=1, question=마지막 프로필 질문, answer=사용자 입력
+              - IMAGE: mode=3, question=고정 질문, answer=사용자 입력
            ------------------------------ */
         async function sendMessage() {
             const text = userInput.value.trim();
             if (!text) return;
+
+            // 🔒 서버 요청 가능 여부 체크
+            if (!canSendNewRequest()) {
+                return;
+            }
 
             appendTextBubble(text, "user");
             chatHistory.push({ role: "user", type: "text", content: text });
             saveHistory();
             userInput.value = "";
 
-            let modeToUse = currentMode;
+            let modeToUse = currentMode;   // "PROFILE" / "IMAGE" / null
             let questionToSend = "";
             let answerToSend = text;
 
             if (modeToUse === "PROFILE") {
                 questionToSend = sessionStorage.getItem("last_profile_question") || "";
-            }
-            else if (modeToUse === "IMAGE") {
-                questionToSend = "동물 그려줄까?";
-            }
-            else {
+            } else if (modeToUse === "IMAGE") {
+                questionToSend =
+                    sessionStorage.getItem("last_image_question") ||
+                    "이미지에 어떤 분위기와 스타일을 원하시나요?";
+            } else {
+                // 일반 상담: mode 안 보내고, answer만 전송
                 modeToUse = null;
-                questionToSend = text;
-                answerToSend = "";
+                questionToSend = "";
+                answerToSend = text;
             }
 
             const loading = appendTextBubble("...", "assistant");
 
             try {
-                const data = await sendModeLog(modeToUse, questionToSend, answerToSend);
+                const data = await sendChatRequest(modeToUse, questionToSend, answerToSend);
 
-                const modeFromServer = data.mode;
-                const answer = data.answer;
+                // 공통 응답: { answer, imageUrl, nextQuestion }
+                const answerText = data.answer || "응답이 비어 있어요 😢";
+                const imageUrl = data.imageUrl;
 
-                if (modeFromServer === "IMAGE") {
-                    loading.textContent = "정말 잘어울려!!";
+                loading.textContent = answerText;
+                chatHistory.push({
+                    role: "assistant",
+                    type: "text",
+                    content: answerText
+                });
 
+                if (imageUrl) {
+                    appendImageBubble(imageUrl);
                     chatHistory.push({
                         role: "assistant",
-                        type: "text",
-                        content: "정말 잘어울려!!"
-                    });
-
-                    appendImageBubble(answer);
-                    chatHistory.push({
-                        role: "assistant",
-                        type: "png",   // 🔥 수정: "png" → "image"
-                        url: answer
-                    });
-
-                } else {
-                    loading.textContent = answer;
-                    chatHistory.push({
-                        role: "assistant",
-                        type: "text",
-                        content: answer
+                        type: "png",
+                        url: imageUrl
                     });
                 }
 
                 saveHistory();
             } catch (e) {
+                console.error(e);
                 loading.textContent = "서버 오류 발생";
+            } finally {
+                // 한 번 쓴 모드는 종료 (PROFILE/IMAGE 한턴 끝나면 일반 모드로 복귀)
+                currentMode = null;
+                finishRequest();
             }
-
-            currentMode = null;
         }
 
         sendBtn.addEventListener("click", sendMessage);
@@ -502,7 +661,31 @@
         });
 
         /* ------------------------------
-           8. 초기화
+           8. 로그아웃 시 sessionStorage 초기화
+           ------------------------------ */
+        function clearChatSession() {
+            sessionStorage.removeItem("jpetstore_chat_history");
+            sessionStorage.removeItem("jpetstore_chat_open");
+            sessionStorage.removeItem("chatHistoryLoadedFromServer");
+            sessionStorage.removeItem("last_profile_question");
+            sessionStorage.removeItem("last_image_question");
+            sessionStorage.removeItem("jpetstore_chat_scroll");
+        }
+
+        const logoutLink = document.querySelector('a[href*="signoff="]');
+
+        // 1) 로그아웃 버튼 클릭 시 삭제
+        if (logoutLink) {
+            logoutLink.addEventListener("click", clearChatSession);
+        }
+
+        // 2) URL에 signoff= 가 포함된 경우(리다이렉트 페이지)도 삭제
+        if (location.href.includes("signoff=")) {
+            clearChatSession();
+        }
+
+        /* ------------------------------
+           9. 초기화
            ------------------------------ */
         (async function () {
             await initChatFromServer();
