@@ -196,6 +196,7 @@ def requestImage(req: ImageRequest):
 @app.post("/analyze_health")
 def analyzePetHealth(req: PetHealthRequest):
     pet_health = analyze_pet_health(req)
-    print(f"Pet Health Analysis Result: {pet_health}")
+    print(req)
+    #print(f"Pet Health Analysis Result: {pet_health}")
     return pet_health
 
