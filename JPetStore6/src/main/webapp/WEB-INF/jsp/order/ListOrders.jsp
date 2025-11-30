@@ -105,7 +105,6 @@
         const panel = document.getElementById("pageContainer");
         const container = document.querySelector('.chat-container');
 
-        // 다른 주문 클릭 시: UI 유지 + ID만 변경
         if (currentOrderId !== orderId) {
             currentOrderId = orderId;
 
@@ -114,17 +113,20 @@
             }
 
             container.innerHTML = "";
-            loadHistory(orderId);
+
+            // 🔥 여기서 초기 채팅 세팅을 시작해야 함
+            initChatSession(orderId);
+
             return;
         }
 
-        // 같은 주문 클릭 시: 토글
         panel.classList.toggle("open");
 
         if (panel.classList.contains("open")) {
-            loadHistory(orderId);
+            initChatSession(orderId);
         }
     }
+
 </script>
 
 <%@ include file="../common/IncludeBottom.jsp"%>

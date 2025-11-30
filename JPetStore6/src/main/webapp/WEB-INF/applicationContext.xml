@@ -36,7 +36,7 @@
     <!-- ✅ 실제 사용할 로컬 HSQLDB 파일 기반 설정 -->
     <bean id="dataSource" class="org.springframework.jdbc.datasource.SimpleDriverDataSource">
         <property name="driverClass" value="org.hsqldb.jdbcDriver"/>
-        <property name="url" value="jdbc:hsqldb:file:D:/Project/Software_Engineering/db/jpetstoredb/jpetstore;shutdown=true;hsqldb.lock_file=false"/>
+        <property name="url" value="jdbc:hsqldb:file:C:/playgorund/Software_Engineering/db/jpetstoredb/jpetstore;shutdown=true;hsqldb.lock_file=false"/>
         <property name="username" value="sa"/>
         <property name="password" value=""/>
     </bean>
