@@ -176,7 +176,7 @@ CREATE TABLE CHAT_MESSAGE (
 );
 
 CREATE TABLE HEALTH_DATA (
-    HEALTH_DETAIL STRING(255), -- 건강 관련 세부 정보
+    HEALTH_DETAIL VARCHAR(255), -- 건강 관련 세부 정보
     ORDER_ID INT, -- 주문 ID
     constraint pk_health_data primary key (order_id)
 );

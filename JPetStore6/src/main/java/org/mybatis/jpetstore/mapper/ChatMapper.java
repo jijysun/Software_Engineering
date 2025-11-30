@@ -35,14 +35,11 @@ public interface ChatMapper {
   // ✅ 사용자별로 최근 keep개만 남기고 나머지 삭제
   void deleteOldMessagesByUserId(@Param("userId") String userId, @Param("keep") int keep);
 
-
-
   // 반려동물 상태 관리 챗봇 부분
 
   // HEALTH_DATA에서 HEALTH_DETAIL을 한 줄(String)로 조회
   String getHealthDataByOrderId(@Param("value") int orderId);
 
   // HEALTH_DATA에 insert 또는 update를 수행
-  void upsertHealthData(@Param("orderId") int orderId,
-                        @Param("healthDetail") String healthDetail);
+  void upsertHealthData(@Param("orderId") int orderId, @Param("healthDetail") String healthDetail);
 }
