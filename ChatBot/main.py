@@ -118,11 +118,13 @@ def chat(req: ChatRequest):
             + "추천된 반려동물과 사용자가 함께 있는 장면을 한 장의 사진으로 그린다고 생각하고, "
             "이 설명은 이미지 생성 모델에 넣을 프롬프트로 사용할 수 있어야 해."
         )
+        image_detail = req.message or ""
 
         user_prompt = (
             f"[사용자 프로필]\n{profile_info}\n\n"
             f"[추천 받은 동물]\n{req.recommended_text}\n\n"
-            "이미지 한 장을 그린다고 생각하고, 구체적인 장면을 자세히 설명해줘."
+            f"{image_detail}\n\n"
+            "위의 [이미지 세부 설정]에 사용자가 적은 분위기/스타일을 반드시 그대로 포함해서,\n"
         )
 
         prompt_for_image = call_gpt(system, user_prompt)
@@ -194,6 +196,7 @@ def requestImage(req: ImageRequest):
 @app.post("/analyze_health")
 def analyzePetHealth(req: PetHealthRequest):
     pet_health = analyze_pet_health(req)
-    print(f"Pet Health Analysis Result: {pet_health}")
+    print(req)
+    #print(f"Pet Health Analysis Result: {pet_health}")
     return pet_health
 

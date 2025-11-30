@@ -15,7 +15,6 @@
        limitations under the License.
 
 --%>
-<%-- 이건 내가 만든 코드인데 ^^ 이건 뭐냐? --%>
 <%@ page pageEncoding="UTF-8" %>
 
 <style>
@@ -241,7 +240,7 @@
         try {
             const response = await fetch("/jpetstore/chat/analyze_health", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json; charset=UTF-8" },
                 body: JSON.stringify({
                     pet_health: latestPetHealth ?? {},
                     history: [
