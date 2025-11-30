@@ -13,16 +13,19 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package src.main.java.org.mybatis.jpetstore.web.actions;
+package org.mybatis.jpetstore.web.actions;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.integration.spring.SpringBean;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
+import org.mybatis.jpetstore.domain.HealthChatMessage;
 import org.mybatis.jpetstore.service.ChatbotService;
 
 @UrlBinding("/actions/PetHealth.action")
@@ -87,6 +90,73 @@ public class PetHealthActionBean implements ActionBean {
       String detail = json.get("healthDetail").toString();
 
       healthDataService.saveHealthData(orderId, detail);
+
+      return new StreamingResolution("application/json;charset=UTF-8", "{\"status\":\"success\"}");
+
+    } catch (IOException e) {
+      return new ErrorResolution(500, "IO error");
+    }
+  }
+
+  // ============================================================
+  // 3) 채팅 히스토리 조회
+  // GET /actions/PetHealth.action?event=getHistory&orderId=3
+  // ============================================================
+  @HandlesEvent("getHistory")
+  public Resolution getHistory() {
+
+    String orderIdStr = context.getRequest().getParameter("orderId");
+    if (orderIdStr == null) {
+      return new ErrorResolution(400, "orderId is required");
+    }
+
+    int orderId = Integer.parseInt(orderIdStr);
+
+    List<HealthChatMessage> list = healthDataService.getHistoryByOrderId(orderId);
+
+    // JSON 변환
+    JSONArray arr = new JSONArray();
+    for (HealthChatMessage m : list) {
+      JSONObject obj = new JSONObject();
+      obj.put("role", m.getRole());
+      obj.put("content", m.getContent());
+      obj.put("created_at", m.getCreatedAt() == null ? null : m.getCreatedAt().toString());
+      arr.put(obj);
+    }
+
+    return new StreamingResolution("application/json;charset=UTF-8", arr.toString());
+  }
+
+  // ============================================================
+  // 4) 채팅 저장
+  // POST /actions/PetHealth.action?event=saveMessage
+  //
+  // Body(JSON):
+  // {
+  // "orderId": 3,
+  // "role": "user",
+  // "content": "메시지"
+  // }
+  // ============================================================
+  @HandlesEvent("saveMessage")
+  public Resolution saveMessage() {
+
+    try {
+      BufferedReader reader = context.getRequest().getReader();
+      String body = reader.lines().collect(Collectors.joining());
+
+      JSONObject json = new JSONObject(body);
+
+      if (!json.has("orderId") || !json.has("role") || !json.has("content")) {
+        return new ErrorResolution(400, "orderId, role, content are required");
+      }
+
+      int orderId = json.getInt("orderId");
+      String role = json.getString("role");
+      String content = json.getString("content");
+
+      // Service 호출 → DB 저장
+      healthDataService.saveMessage(orderId, role, content);
 
       return new StreamingResolution("application/json;charset=UTF-8", "{\"status\":\"success\"}");
 

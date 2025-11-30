@@ -115,4 +115,24 @@
                     VALUES (#{orderId}, #{healthDetail});
     </insert>
 
+
+    <!-- order_id로 동물케어 챗봇 히스토리 조회 -->
+    <select id="getHealthChatHistoryByOrderId" parameterType="int" resultType="org.mybatis.jpetstore.domain.HealthChatMessage">
+        SELECT
+            ID,
+            ORDER_ID,
+            ROLE,
+            CONTENT,
+            CREATED_AT
+        FROM HEALTH_CHAT_HISTORY
+        WHERE order_id = #{value}
+        ORDER BY created_at ASC, id ASC
+    </select>
+
+    <!-- 동물케어 챗봇 대화 기록 -->
+    <insert id="insertHealthChatMessage" parameterType="org.mybatis.jpetstore.domain.HealthChatMessage">
+        INSERT INTO HEALTH_CHAT_HISTORY (order_id, role, content)
+        VALUES (#{orderId}, #{role}, #{content});
+    </insert>
+
 </mapper>
