@@ -15,6 +15,7 @@
        limitations under the License.
 
 --%>
+
 <%@ page pageEncoding="UTF-8" %>
 
 <style>
@@ -244,7 +245,7 @@
             //const response = await fetch("chat/analyze_health", {
             const response = await fetch("/jpetstore/chat/analyze_health", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json; charset=UTF-8" },
                 body: JSON.stringify({
                     pet_health: latestPetHealth ?? {},
                     history: [
