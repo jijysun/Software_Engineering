@@ -94,4 +94,25 @@
             )
     </delete>
     <!-- 🔼🔼🔼 -->
+
+    <!-- 반려동물 상태 조회 -->
+    <select id="getHealthDataByOrderId"
+            parameterType="int"
+            resultType="string">
+        SELECT HEALTH_DETAIL
+        FROM HEALTH_DATA
+        WHERE ORDER_ID = #{value}
+    </select>
+
+    <!-- 반려동물 상태 데이터 생성 또는 갱신 -->
+    <insert id="upsertHealthData" parameterType="map">
+        MERGE INTO HEALTH_DATA USING (VALUES(1))
+            ON (ORDER_ID = #{orderId})
+            WHEN MATCHED THEN
+                UPDATE SET HEALTH_DETAIL = #{healthDetail}
+            WHEN NOT MATCHED THEN
+                INSERT (ORDER_ID, HEALTH_DETAIL)
+                    VALUES (#{orderId}, #{healthDetail});
+    </insert>
+
 </mapper>

@@ -307,8 +307,18 @@ public class ChatbotService {
     return dto;
   }
 
+
   public List<ChatMessage> getMessagesByUserId(String userId) {
     return chatMapper.getMessagesByUserId(userId);
   }
 
+
+  // --------------------반려동물 케어서비스 챗봇 부분--------------------------------------
+  public String getHealthData(int orderId) {
+      return chatMapper.getHealthDataByOrderId(orderId);
+  }
+
+  public void saveHealthData(int orderId, String detail) {
+      chatMapper.upsertHealthData(orderId, detail);
+  }
 }
