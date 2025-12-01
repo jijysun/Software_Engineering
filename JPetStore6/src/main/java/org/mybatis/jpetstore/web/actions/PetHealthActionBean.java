@@ -15,10 +15,10 @@
  */
 package org.mybatis.jpetstore.web.actions;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import javax.servlet.http.HttpServletRequest;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.integration.spring.SpringBean;
@@ -30,6 +30,7 @@ import org.mybatis.jpetstore.service.ChatbotService;
 
 @UrlBinding("/actions/PetHealth.action")
 public class PetHealthActionBean implements ActionBean {
+
   private ActionBeanContext context;
 
   @SpringBean
@@ -46,11 +47,48 @@ public class PetHealthActionBean implements ActionBean {
   }
 
   // ======================================================
-  // 1) HEALTH_DATA 조회
-  // URL 예: /jpetstore/actions/PetHealth.action?event=get&orderId=1001
+  // 🔥 모든 요청은 여기로 들어옴 → 우리가 직접 event 기반으로 분기한다.
   // ======================================================
   @DefaultHandler
-  public Resolution get() {
+  public Resolution route() {
+
+    HttpServletRequest req = context.getRequest();
+    String event = req.getParameter("event");
+
+    JSONObject jsonBody = null;
+
+    // ---------- 1) JSON Body 로부터 event 추출 ----------
+    try {
+      String body = req.getReader().lines().collect(Collectors.joining());
+      if (body != null && !body.isEmpty()) {
+        jsonBody = new JSONObject(body);
+
+        if (event == null && jsonBody.has("event")) {
+          event = jsonBody.getString("event");
+        }
+      }
+    } catch (Exception ignored) {
+    }
+
+    // ---------- 2) event 값에 따라 분기 ----------
+    if ("saveMessage".equals(event)) {
+      return handleSaveMessage(jsonBody);
+    }
+    if ("save".equals(event)) {
+      return handleSave(jsonBody);
+    }
+    if ("getHistory".equals(event)) {
+      return handleGetHistory();
+    }
+
+    // event가 없으면 기본 조회(get)
+    return handleGet();
+  }
+
+  // ======================================================
+  // HEALTH_DATA 조회 (event=get)
+  // ======================================================
+  public Resolution handleGet() {
 
     String orderIdStr = context.getRequest().getParameter("orderId");
     if (orderIdStr == null) {
@@ -64,46 +102,26 @@ public class PetHealthActionBean implements ActionBean {
   }
 
   // ======================================================
-  // 2) HEALTH_DATA 저장
-  // URL 예: /jpetstore/actions/PetHealth.action?event=save
-  //
-  // Body(JSON):
-  // {
-  // "orderId": 1001,
-  // "healthDetail": {...}
-  // }
+  // HEALTH_DATA 저장 (event=save)
   // ======================================================
-  @HandlesEvent("save")
-  public Resolution save() {
+  public Resolution handleSave(JSONObject json) {
 
-    try {
-      BufferedReader reader = context.getRequest().getReader();
-      String body = reader.lines().collect(Collectors.joining());
-
-      JSONObject json = new JSONObject(body);
-
-      if (!json.has("orderId") || !json.has("healthDetail")) {
-        return new ErrorResolution(400, "orderId and healthDetail are required");
-      }
-
-      int orderId = json.getInt("orderId");
-      String detail = json.get("healthDetail").toString();
-
-      healthDataService.saveHealthData(orderId, detail);
-
-      return new StreamingResolution("application/json;charset=UTF-8", "{\"status\":\"success\"}");
-
-    } catch (IOException e) {
-      return new ErrorResolution(500, "IO error");
+    if (json == null || !json.has("orderId") || !json.has("healthDetail")) {
+      return new ErrorResolution(400, "orderId and healthDetail are required");
     }
+
+    int orderId = json.getInt("orderId");
+    String detail = json.get("healthDetail").toString();
+
+    healthDataService.saveHealthData(orderId, detail);
+
+    return new StreamingResolution("application/json;charset=UTF-8", "{\"status\":\"success\"}");
   }
 
-  // ============================================================
-  // 3) 채팅 히스토리 조회
-  // GET /actions/PetHealth.action?event=getHistory&orderId=3
-  // ============================================================
-  @HandlesEvent("getHistory")
-  public Resolution getHistory() {
+  // ======================================================
+  // 채팅 히스토리 조회 (event=getHistory)
+  // ======================================================
+  public Resolution handleGetHistory() {
 
     String orderIdStr = context.getRequest().getParameter("orderId");
     if (orderIdStr == null) {
@@ -114,7 +132,6 @@ public class PetHealthActionBean implements ActionBean {
 
     List<HealthChatMessage> list = healthDataService.getHistoryByOrderId(orderId);
 
-    // JSON 변환
     JSONArray arr = new JSONArray();
     for (HealthChatMessage m : list) {
       JSONObject obj = new JSONObject();
@@ -127,41 +144,21 @@ public class PetHealthActionBean implements ActionBean {
     return new StreamingResolution("application/json;charset=UTF-8", arr.toString());
   }
 
-  // ============================================================
-  // 4) 채팅 저장
-  // POST /actions/PetHealth.action?event=saveMessage
-  //
-  // Body(JSON):
-  // {
-  // "orderId": 3,
-  // "role": "user",
-  // "content": "메시지"
-  // }
-  // ============================================================
-  @HandlesEvent("saveMessage")
-  public Resolution saveMessage() {
+  // ======================================================
+  // 채팅 메시지 저장 (event=saveMessage)
+  // ======================================================
+  public Resolution handleSaveMessage(JSONObject json) {
 
-    try {
-      BufferedReader reader = context.getRequest().getReader();
-      String body = reader.lines().collect(Collectors.joining());
-
-      JSONObject json = new JSONObject(body);
-
-      if (!json.has("orderId") || !json.has("role") || !json.has("content")) {
-        return new ErrorResolution(400, "orderId, role, content are required");
-      }
-
-      int orderId = json.getInt("orderId");
-      String role = json.getString("role");
-      String content = json.getString("content");
-
-      // Service 호출 → DB 저장
-      healthDataService.saveMessage(orderId, role, content);
-
-      return new StreamingResolution("application/json;charset=UTF-8", "{\"status\":\"success\"}");
-
-    } catch (IOException e) {
-      return new ErrorResolution(500, "IO error");
+    if (json == null || !json.has("orderId") || !json.has("role") || !json.has("content")) {
+      return new ErrorResolution(400, "orderId, role, content are required");
     }
+
+    int orderId = json.getInt("orderId");
+    String role = json.getString("role");
+    String content = json.getString("content");
+
+    healthDataService.saveMessage(orderId, role, content);
+
+    return new StreamingResolution("application/json;charset=UTF-8", "{\"status\":\"success\"}");
   }
 }
