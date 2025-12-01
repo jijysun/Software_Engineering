@@ -20,6 +20,7 @@ import java.util.List;
 import org.json.JSONObject;
 import org.mybatis.jpetstore.domain.Account;
 import org.mybatis.jpetstore.domain.ChatMessage;
+import org.mybatis.jpetstore.domain.HealthChatMessage;
 import org.mybatis.jpetstore.mapper.AccountMapper;
 import org.mybatis.jpetstore.mapper.ChatMapper;
 import org.mybatis.jpetstore.service.dto.PythonChatRequestDto;
@@ -177,9 +178,21 @@ public class ChatbotService {
     }
 
     // 2-2) Python으로 보낼 DTO 만들기
+    // 🔹 2-2) Python으로 보낼 메시지 구성 (특히 모드3일 때 Q/A 합치기)
+    String messageForAi = userInput;
+
+    // 3번 모드이면서 프론트에서 고정 질문을 보내준 경우
+    if (mode != null && mode == 3 && questionFromFront != null && !questionFromFront.trim().isEmpty()) {
+
+      String q = questionFromFront.trim();
+      String a = userInput != null ? userInput.trim() : "";
+
+      messageForAi = "[이미지 세부 설정]\n" + "질문: " + q + "\n" + "사용자 답변: " + a + "\n";
+    }
+
     PythonChatRequestDto reqDto = new PythonChatRequestDto();
     reqDto.setUserId(userId);
-    reqDto.setMessage(userInput);
+    reqDto.setMessage(messageForAi);
     reqDto.setMode(mode);
     reqDto.setProfileInfo(profileInfo);
 
@@ -299,4 +312,25 @@ public class ChatbotService {
     return chatMapper.getMessagesByUserId(userId);
   }
 
+  // --------------------반려동물 케어서비스 챗봇 부분--------------------------------------
+  public String getHealthData(int orderId) {
+    return chatMapper.getHealthDataByOrderId(orderId);
+  }
+
+  public void saveHealthData(int orderId, String detail) {
+    chatMapper.upsertHealthData(orderId, detail);
+  }
+
+  public List<HealthChatMessage> getHistoryByOrderId(int orderId) {
+    return chatMapper.getHealthChatHistoryByOrderId(orderId);
+  }
+
+  public void saveMessage(int orderId, String role, String content) {
+    HealthChatMessage msg = new HealthChatMessage();
+    msg.setOrderId(orderId);
+    msg.setRole(role);
+    msg.setContent(content);
+
+    chatMapper.insertHealthChatMessage(msg);
+  }
 }

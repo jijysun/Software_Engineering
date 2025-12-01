@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 import org.mybatis.jpetstore.domain.ChatMessage;
+import org.mybatis.jpetstore.domain.HealthChatMessage;
 
 public interface ChatMapper {
 
@@ -34,4 +35,19 @@ public interface ChatMapper {
 
   // ✅ 사용자별로 최근 keep개만 남기고 나머지 삭제
   void deleteOldMessagesByUserId(@Param("userId") String userId, @Param("keep") int keep);
+
+  // 아래부터는
+  // 반려동물 상태 관리 챗봇 부분
+
+  // HEALTH_DATA에서 HEALTH_DETAIL을 한 줄(String)로 조회
+  String getHealthDataByOrderId(@Param("value") int orderId);
+
+  // HEALTH_DATA에 insert 또는 update를 수행
+  void upsertHealthData(@Param("orderId") int orderId, @Param("healthDetail") String healthDetail);
+
+  // order_id 기반으로 채팅 히스토리 조회
+  List<HealthChatMessage> getHealthChatHistoryByOrderId(int orderId);
+
+  // 채팅 메시지 저장
+  void insertHealthChatMessage(HealthChatMessage message);
 }
