@@ -113,10 +113,8 @@
         </div>
     </div>
 
-    <!-- 받은 데이터 표시용, jsp 내에서 토글로 공개 여부 설정 가능 -->
-    <div class="data-container">
-
-    </div>
+    <!-- 받은 데이터 표시용 -->
+    <div class="data-container"></div>
 </div>
 
 <script>
@@ -126,12 +124,9 @@
 
     let latestPetHealth = {};
     let latestHistory = [];
-    let currentPetId = null;
-    let isChatInitialized = false;
+    window.currentPetId = null;
 
-    const hiddenKeys = [
-        "pet_id"
-    ];
+    const hiddenKeys = ["pet_id"];
 
     const LABELS = {
         pet_id: "ID",
@@ -160,127 +155,208 @@
         recent_stress_event: "최근 스트레스"
     };
 
-    function addMessageToUI(msg) {
+    // ----------------------------
+    // 공통 메시지 UI 유틸
+    // ----------------------------
+    function addSystemMessage(text) {
         const el = document.createElement('div');
-        el.classList.add('msg', msg.role);
-        el.innerText = msg.message;
+        el.classList.add('msg', 'bot');
+        el.innerText = text;
         chatContainer.appendChild(el);
     }
 
-    async function addMyMessage() {
-        const text = chatInput.value;
-        chatInput.value = "";
-
-        // 내 메시지
-        const myMsg = document.createElement("div");
-        myMsg.classList.add("msg", "me");
-        myMsg.innerText = text;
-        chatContainer.appendChild(myMsg);
-
-        // 서버 전송 (실패 시 어차피 터짐)
-        const response = await fetch("/jpetstore/chat/analyze_health", {
-            method: "POST",
-            headers: { "Content-Type": "application/json; charset=UTF-8" },
-            body: JSON.stringify({
-                pet_health: latestPetHealth,
-                history: [...latestHistory, { role: "user", content: text }],
-                msg: text
-            })
-        });
-
-        const raw = await response.json();
-
-        latestPetHealth = raw.pet_health;
-        latestHistory = raw.history;
-
-        await saveHealthData();
-
-        renderPetHealth();
-
-        // 서버가 msg를 항상 준다고 믿는다
-        const replyText = raw.msg;
-
-        const botMsg = document.createElement("div");
-        botMsg.classList.add("msg", "bot");
-        botMsg.innerText = replyText;
-        chatContainer.appendChild(botMsg);
-
-        scrollToBottom();
+    function addHistoryMessage(role, content) {
+        const el = document.createElement('div');
+        if (role === 'user') {
+            el.classList.add('msg', 'me');
+        } else {
+            el.classList.add('msg', 'bot');
+        }
+        el.innerText = content;
+        chatContainer.appendChild(el);
     }
 
-    // --------------------------------------------------------------------------------------
-    // 채팅 시작
-    // --------------------------------------------------------------------------------------
-    async function initChatSession(orderId) {
-        currentPetId = orderId;
-        chatContainer.innerHTML = "";
+    function scrollToBottom() {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
 
-        addMessageToUI({
-            role: "bot",
-            message: "반려동물 품종이 뭐예요?"
-        });
+    // ----------------------------
+    // HEALTH_DATA 로드 / 저장
+    // ----------------------------
+    async function loadPetHealth() {
+        if (!window.currentPetId) return;
 
-        await loadPetHealth();
+        const res = await fetch(
+            `/jpetstore/actions/PetHealth.action?event=get&orderId=\${window.currentPetId}`
+        );
 
-        renderPetHealth();
-
-        scrollToBottom();
+        if (!res.ok) {
+            latestPetHealth = {};
+            return;
+        }
+        latestPetHealth = await res.json();
     }
 
     async function saveHealthData() {
-        const res = await fetch("/jpetstore/actions/PetHealth.action?event=save", {
+        if (!window.currentPetId) return;
+        await fetch("/jpetstore/actions/PetHealth.action?event=save", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
                 event: "save",
-                orderId: currentPetId,
+                orderId: window.currentPetId,
                 healthDetail: latestPetHealth
             })
         });
-
-        return await res.json();
     }
 
-    // --------------------------------------------------------------------------------------
-    // 히스토리 로드 (서버가 항상 배열만 보내준다고 믿는다)
-    // --------------------------------------------------------------------------------------
-    async function loadPetHealth() {
-        const res = await fetch(`/jpetstore/actions/PetHealth.action?event=get&orderId=` + currentPetId);
-        latestPetHealth = await res.json();
+    // ----------------------------
+    // 채팅 히스토리 로드 / 저장
+    // ----------------------------
+    async function loadHistory() {
+        if (!window.currentPetId) return [];
+        const res = await fetch(
+            `/jpetstore/actions/PetHealth.action?event=getHistory&orderId=\${window.currentPetId}`
+        );
+        if (!res.ok) {
+            return [];
+        }
+        const history = await res.json();
+        return Array.isArray(history) ? history : [];
     }
 
-    // --------------------------------------------------------------------------------------
-    // 데이터 렌더러 (검증 없음)
-    // --------------------------------------------------------------------------------------
+    async function saveChatMessage(role, content) {
+        if (!window.currentPetId) return;
+        try {
+            await fetch("/jpetstore/actions/PetHealth.action?event=saveMessage", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json; charset=UTF-8"
+                },
+                body: JSON.stringify({
+                    event: "saveMessage",
+                    orderId: window.currentPetId,
+                    role: role,      // "user" 또는 "assistant"
+                    content: content // 실제 저장할 메시지 텍스트
+                })
+            });
+        } catch (e) {
+            console.error("saveChatMessage error", e);
+        }
+    }
+
+    // ----------------------------
+    // HEALTH_DATA 렌더링
+    // ----------------------------
     function renderPetHealth() {
         dataContainer.innerHTML = '';
-        const ph = latestPetHealth;
+        const ph = latestPetHealth || {};
+
         const dl = document.createElement('dl');
         dl.classList.add('pet-health');
 
-        for (const key of Object.keys(ph)) {
-            if (hiddenKeys.includes(key)) continue;
-            if (ph[key] === null) continue;
+        Object.keys(ph).forEach((key) => {
+            if (hiddenKeys.includes(key)) return;
+            const value = ph[key];
+            if (value === null || value === undefined || value === "") return;
 
             const dt = document.createElement('dt');
-            dt.textContent = LABELS[key];
+            dt.textContent = LABELS[key] || key;
             dl.appendChild(dt);
 
             const dd = document.createElement('dd');
-            dd.textContent = ph[key];
+            dd.textContent = value;
             dl.appendChild(dd);
-        }
+        });
 
         dataContainer.appendChild(dl);
     }
 
-    // --------------------------------------------------------------------------------------
-    // 채팅 UI
-    // --------------------------------------------------------------------------------------
-    function scrollToBottom() {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+    // ----------------------------
+    // 채팅 한 턴
+    // ----------------------------
+    async function addMyMessage() {
+        const text = chatInput.value.trim();
+        if (!text) return;
+        chatInput.value = "";
+
+        // 1) 내 메시지 UI + DB 저장
+        addHistoryMessage('user', text);
+        saveChatMessage('user', text);
+
+        // 2) FastAPI로 분석 요청
+        let raw;
+        try {
+            const response = await fetch("/jpetstore/chat/analyze_health", {
+                method: "POST",
+                headers: { "Content-Type": "application/json; charset=UTF-8" },
+                body: JSON.stringify({
+                    pet_health: latestPetHealth,
+                    history: latestHistory,
+                    msg: text
+                })
+            });
+
+            raw = await response.json();
+        } catch (e) {
+            console.error(e);
+            addHistoryMessage('assistant', "서버 오류가 발생했습니다.");
+            return;
+        }
+
+        // 3) pet_health / history 갱신
+        latestPetHealth = raw.pet_health || latestPetHealth || {};
+        latestHistory   = raw.history    || latestHistory   || [];
+
+        // 4) HEALTH_DATA 저장 + 렌더링
+        await saveHealthData();
+        renderPetHealth();
+
+        // 5) 챗봇 응답 텍스트 결정
+        const replyText =
+            (raw.msg && raw.msg.trim()) ||
+            (raw.message && raw.message.trim()) ||
+            (raw.text && raw.text.trim()) ||
+            "응답이 비어 있습니다.";
+
+        // 6) 봇 메시지 UI + DB 저장
+        addHistoryMessage('assistant', replyText);
+        saveChatMessage('assistant', replyText);
+
+        scrollToBottom();
     }
 
+    // ----------------------------
+    // 채팅 세션 초기화 (listOrders.jsp에서 호출)
+    // ----------------------------
+    async function initChatSession(orderId) {
+        window.currentPetId = orderId;
+        chatContainer.innerHTML = "";
+
+        // 인사말 (DB에는 저장하지 않음)
+        addSystemMessage("반려동물 품종이 뭐예요?");
+
+        // HEALTH_DATA 로드
+        await loadPetHealth();
+        renderPetHealth();
+
+        // 히스토리 로드
+        const history = await loadHistory();
+        history.forEach((msg) => {
+            addHistoryMessage(msg.role, msg.content);
+        });
+
+        scrollToBottom();
+    }
+
+    // ----------------------------
+    // Enter 키 처리
+    // ----------------------------
+    function handleEnter(e) {
+        if (e.key === "Enter") {
+            addMyMessage();
+        }
+    }
 </script>
