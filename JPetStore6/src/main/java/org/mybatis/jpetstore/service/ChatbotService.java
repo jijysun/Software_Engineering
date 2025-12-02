@@ -20,6 +20,7 @@ import java.util.List;
 import org.json.JSONObject;
 import org.mybatis.jpetstore.domain.Account;
 import org.mybatis.jpetstore.domain.ChatMessage;
+import org.mybatis.jpetstore.domain.HealthChatMessage;
 import org.mybatis.jpetstore.mapper.AccountMapper;
 import org.mybatis.jpetstore.mapper.ChatMapper;
 import org.mybatis.jpetstore.service.dto.PythonChatRequestDto;
@@ -311,4 +312,25 @@ public class ChatbotService {
     return chatMapper.getMessagesByUserId(userId);
   }
 
+  // --------------------반려동물 케어서비스 챗봇 부분--------------------------------------
+  public String getHealthData(int orderId) {
+    return chatMapper.getHealthDataByOrderId(orderId);
+  }
+
+  public void saveHealthData(int orderId, String detail) {
+    chatMapper.upsertHealthData(orderId, detail);
+  }
+
+  public List<HealthChatMessage> getHistoryByOrderId(int orderId) {
+    return chatMapper.getHealthChatHistoryByOrderId(orderId);
+  }
+
+  public void saveMessage(int orderId, String role, String content) {
+    HealthChatMessage msg = new HealthChatMessage();
+    msg.setOrderId(orderId);
+    msg.setRole(role);
+    msg.setContent(content);
+
+    chatMapper.insertHealthChatMessage(msg);
+  }
 }

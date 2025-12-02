@@ -175,3 +175,11 @@ CREATE TABLE CHAT_MESSAGE (
                               CREATED_AT  TIMESTAMP   DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE HEALTH_DATA (
+    HEALTH_DETAIL VARCHAR(255), -- 건강 관련 세부 정보
+    ORDER_ID INT, -- 주문 ID
+    constraint pk_health_data primary key (order_id)
+);
+
+-- actionbean -> service -> mapper -> xml
+-- 초기에 select , 응답이 왔을때 update

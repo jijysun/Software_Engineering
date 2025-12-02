@@ -94,4 +94,45 @@
             )
     </delete>
     <!-- 🔼🔼🔼 -->
+
+    <!-- 반려동물 상태 조회 -->
+    <select id="getHealthDataByOrderId"
+            parameterType="int"
+            resultType="string">
+        SELECT HEALTH_DETAIL
+        FROM HEALTH_DATA
+        WHERE ORDER_ID = #{value}
+    </select>
+
+    <!-- 반려동물 상태 데이터 생성 또는 갱신 -->
+    <insert id="upsertHealthData" parameterType="map">
+        MERGE INTO HEALTH_DATA USING (VALUES(1))
+            ON (ORDER_ID = #{orderId})
+            WHEN MATCHED THEN
+                UPDATE SET HEALTH_DETAIL = #{healthDetail}
+            WHEN NOT MATCHED THEN
+                INSERT (ORDER_ID, HEALTH_DETAIL)
+                    VALUES (#{orderId}, #{healthDetail});
+    </insert>
+
+
+    <!-- order_id로 동물케어 챗봇 히스토리 조회 -->
+    <select id="getHealthChatHistoryByOrderId" parameterType="int" resultType="org.mybatis.jpetstore.domain.HealthChatMessage">
+        SELECT
+            ID,
+            ORDER_ID,
+            ROLE,
+            CONTENT,
+            CREATED_AT
+        FROM HEALTH_CHAT_HISTORY
+        WHERE order_id = #{value}
+        ORDER BY created_at ASC, id ASC
+    </select>
+
+    <!-- 동물케어 챗봇 대화 기록 -->
+    <insert id="insertHealthChatMessage" parameterType="org.mybatis.jpetstore.domain.HealthChatMessage">
+        INSERT INTO HEALTH_CHAT_HISTORY (order_id, role, content)
+        VALUES (#{orderId}, #{role}, #{content});
+    </insert>
+
 </mapper>
