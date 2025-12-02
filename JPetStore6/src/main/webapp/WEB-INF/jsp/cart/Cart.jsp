@@ -59,8 +59,8 @@
 				${cartItem.item.attribute3} ${cartItem.item.attribute4}
 				${cartItem.item.attribute5} ${cartItem.item.product.name}</td>
 				<td>${cartItem.inStock}</td>
-				<td><stripes:text size="3" name="${cartItem.item.itemId}"
-					value="${cartItem.quantity}" /></td>
+				<td>1<%--<stripes:text size="3" name="${cartItem.item.itemId}"
+					value="${cartItem.quantity}" />--%></td>
 				<td>$<fmt:formatNumber value="${cartItem.item.listPrice}"
 					pattern="#,##0.00" /></td>
 				<td>$<fmt:formatNumber value="${cartItem.total}"
@@ -81,7 +81,7 @@
 		</tr>
 	</table>
 
-</stripes:form> <c:if test="${actionBean.cart.numberOfItems > 0}">
+</stripes:form> <c:if test="${actionBean.cart.numberOfItems == 1}">
 	<stripes:link class="Button"
 		beanclass="org.mybatis.jpetstore.web.actions.OrderActionBean"
 		event="newOrderForm">

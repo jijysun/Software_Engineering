@@ -265,15 +265,15 @@
         latestPetHealth = raw.pet_health;
         //latestHistory   = raw.history;    <-- 덮어씌우면 비어버림 ㄴㄴ
 
-        const botMessage = raw.msg || "메시지가 자아를 찾아 여행을 떠났습니다.";
+        const assistantMessage = raw.msg || "메시지가 자아를 찾아 여행을 떠났습니다.";
 
-        addChatMessage('assistant', botMessage);
-        await saveChatMessage('assistant', botMessage);
+        addChatMessage('assistant', assistantMessage);
+        await saveChatMessage('assistant', assistantMessage);
 
         // assistant 메시지도 history에 추가
         latestHistory.push({
             role: "assistant",
-            content: botMessage
+            content: assistantMessage
         });
 
         addHealthData();

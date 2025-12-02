@@ -39,15 +39,11 @@
         display: block;
     }
 
+    <%--
     table {
         margin: 0 auto;
     }
-
-    .chat-btn {
-        cursor: pointer;
-        color: blue;
-        text-decoration: underline;
-    }
+    --%>
 </style>
 
 <div class="page-container" id="pageContainer">
@@ -66,7 +62,7 @@
 
             <c:forEach var="order" items="${actionBean.orderList}">
                 <tr>
-                    <td><span class="chat-btn" onclick="openChatbot(${order.orderId})">Open</span></td>
+                    <td><a class="Button" onclick="openChatbot(${order.orderId})">Open</a></td>
 
                     <td>
                         <stripes:link
