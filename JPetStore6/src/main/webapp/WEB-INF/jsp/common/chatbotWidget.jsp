@@ -22,8 +22,8 @@
         position: fixed;
         right: 24px;
         bottom: 24px;
-        width: 320px;
-        max-height: 420px;
+        width: 380px;          /* 🔼 320 → 380 */
+        max-height: 520px;     /* 🔼 420 → 520 */
         font-family: system-ui, sans-serif;
         z-index: 9999;
     }
@@ -33,8 +33,8 @@
         color: #fff;
         border: none;
         border-radius: 999px;
-        padding: 10px 14px;
-        font-size: 14px;
+        padding: 12px 16px;    /* 🔼 살짝 키움 */
+        font-size: 15px;       /* 🔼 14 → 15 */
         font-weight: 500;
         box-shadow: 0 8px 20px rgba(0,0,0,0.25);
         cursor: pointer;
@@ -48,16 +48,16 @@
         box-shadow: 0 20px 40px rgba(0,0,0,0.18);
         border: 1px solid #ccc;
         margin-top: 8px;
-        height: 380px;
+        height: 480px;         /* 🔼 380 → 480 */
         flex-direction: column;
         overflow: hidden;
     }
 
     #chatbot-header {
         background: #fff;
-        padding: 12px 16px;
+        padding: 14px 18px;    /* 🔼 패딩 조금 키움 */
         border-bottom: 1px solid #eee;
-        font-size: 14px;
+        font-size: 15px;       /* 🔼 14 → 15 */
         line-height: 1.4;
     }
 
@@ -65,19 +65,19 @@
         flex: 1;
         overflow-y: auto;
         background: #f9fafb;
-        padding: 12px;
+        padding: 14px;         /* 🔼 12 → 14 */
     }
 
     .bubble {
-        max-width: 80%;
-        margin-bottom: 10px;
-        padding: 10px 12px;
-        border-radius: 14px;
-        line-height: 1.4;
+        max-width: 90%;        /* 🔼 80% → 90% */
+        margin-bottom: 12px;   /* 🔼 10 → 12 */
+        padding: 11px 13px;    /* 🔼 살짝 키움 */
+        border-radius: 16px;   /* 🔼 14 → 16 (좀 더 둥글게) */
+        line-height: 1.5;
         box-shadow: 0 4px 10px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
         word-break: break-word;
         white-space: pre-wrap;
-        font-size: 13px;
+        font-size: 14px;       /* 🔼 13 → 14 */
     }
 
     .user {
@@ -100,7 +100,7 @@
     }
 
     .bot-image img {
-        max-width: 220px;
+        max-width: 260px;      /* 🔼 220 → 260 (챗봇 더 넓어졌으니 이미지도) */
         border-radius: 12px;
         display: block;
     }
@@ -110,16 +110,16 @@
         border-top: 1px solid #eee;
         display: flex;
         flex-direction: column;
-        gap: 6px;
-        padding: 10px;
+        gap: 8px;              /* 🔼 6 → 8 */
+        padding: 12px;         /* 🔼 10 → 12 */
     }
 
     #chatbot-user-input {
         flex: 1;
         border: 1px solid #d1d5db;
         border-radius: 8px;
-        padding: 8px 10px;
-        font-size: 13px;
+        padding: 9px 11px;     /* 🔼 조금 키움 */
+        font-size: 14px;       /* 🔼 13 → 14 */
     }
 
     #chatbot-send-btn {
@@ -127,15 +127,15 @@
         color: #fff;
         border-radius: 8px;
         font-weight: 500;
-        font-size: 13px;
-        padding: 8px 10px;
+        font-size: 14px;       /* 🔼 13 → 14 */
+        padding: 9px 11px;     /* 🔼 조금 키움 */
         border: none;
         cursor: pointer;
     }
 
     #chatbot-quick-area {
         display: flex;
-        gap: 4px;
+        gap: 6px;              /* 🔼 4 → 6 */
         flex-wrap: wrap;
         margin-bottom: 6px;
     }
@@ -144,8 +144,8 @@
         flex: 1;
         border: 1px solid #e5e7eb;
         border-radius: 999px;
-        padding: 5px 8px;
-        font-size: 11px;
+        padding: 6px 10px;     /* 🔼 5x8 → 6x10 */
+        font-size: 12px;       /* 🔼 11 → 12 */
         background: #f3f4f6;
         cursor: pointer;
         white-space: nowrap;
@@ -155,6 +155,7 @@
         background: #e5e7eb;
     }
 </style>
+
 
 
 <div id="chatbot-container">
@@ -173,17 +174,18 @@
 
             <div id="chatbot-quick-area">
                 <button class="chatbot-quick-btn"
-                        data-msg="너를 설명해줘"
-                        data-mode="PROFILE">너를 알고 싶어 ^.^</button>
+                        data-msg="더 나은 서비스를 위해 고객님에 대해 알고 싶어요!😊"
+                        data-mode="PROFILE">고객님을 알고 싶어요 💬</button>
 
                 <button class="chatbot-quick-btn"
-                        data-msg="어떤 동물 추천해줄까?"
-                        data-mode="RECOMMEND">동물 추천 XD</button>
+                        data-msg="고객님께 꼭 맞는 반려동물을 추천해드릴게요!!🐾"
+                        data-mode="RECOMMEND">반려동물 추천받기 🐾</button>
 
                 <button class="chatbot-quick-btn"
-                        data-msg="지금까지의 너의 정보를 바탕으로 반려동물과 함께할 너의 미래를 그려줄께!! 어떤 동물을 그려줄까?"
-                        data-mode="IMAGE">반려동물과 함께하는 미래~</button>
+                        data-msg="고객님과 반려동물이 함께할 미래를 그려드릴게요 🎨 원하는 느낌을 말씀해주세요 ✨ ex) 반려동물과 함께 한강에서 산책하는 모습"
+                        data-mode="IMAGE">반려동물과 함께하는 미래 보기 🎨</button>
             </div>
+
 
             <input id="chatbot-user-input" type="text" placeholder="예) 강아지 사료 추천해줘">
             <button id="chatbot-send-btn">보내기</button>
@@ -230,16 +232,25 @@
            1. 랜덤 질문 목록(PROFILE)
            ------------------------------ */
         const profileQuestions = [
-            "너의 하루 루틴을 간단히 설명해줄래?",
-            "집에서 보내는 시간이 많아? 아니면 밖에서 보내는 시간이 많아?",
-            "주말에는 보통 무엇을 하면서 보내?",
-            "사람 많은 곳이 좋아? 조용한 곳이 좋아?",
-            "너가 생각하는 너의 성격은 어떤 편이야?",
-            "요즘 가장 즐기는 취미나 활동이 있다면 뭐야?",
-            "하루 중 좋아하는 시간대와 이유가 있다면 알려줘.",
-            "스트레스 받을 때 보통 어떻게 풀어?",
-            "반려동물과 함께한다면 어떤 순간을 가장 기대해?",
-            "너가 사는 집 분위기(활발/차분/가족 수)를 알려줄래?"
+            "고객님의 하루 일정은 어떤 편인가요?\n(예: 아침 9시에 출근하고 저녁 6시에 퇴근해)",
+
+            "고객님은 집에서 보내는 시간이 많으신가요, 아니면 외부 활동이 더 많으신가요?\n(예: 평일엔 대부분 집에 있어)",
+
+            "주말에는 보통 어떤 활동을 하시나요?\n(예: 영화 보거나 산책해)",
+
+            "조용한 환경과 사람 많은 환경 중 어떤 분위기를 더 선호하시나요?\n(예: 조용한 카페를 좋아해)",
+
+            "고객님의 성격을 한 문장으로 표현한다면 어떻게 설명할 수 있을까요?\n(예: 차분하고 조용한 편이야)",
+
+            "최근에 즐기고 계신 취미나 활동이 있다면 알려주세요.\n(예: 러닝, 요가, 게임 등)",
+
+            "하루 중 가장 좋아하는 시간대와 그 이유가 궁금해요.\n(예: 밤 시간이 제일 편안해서 좋아)",
+
+            "스트레스를 받을 때는 주로 어떻게 해소하시나요?\n(예: 음악 듣기, 산책, 친구 만나기)",
+
+            "반려동물과 함께하게 된다면 어떤 순간을 가장 기대하시나요?\n(예: 집에 오면 반겨주는 모습)",
+
+            "고객님이 거주하시는 공간의 분위기나 형태를 알려주실 수 있을까요?\n(예: 원룸, 가족과 같이 거주, 차분한 분위기)"
         ];
         let remainingProfileQuestions = [...profileQuestions];
 
@@ -523,7 +534,7 @@
 
                 /* IMAGE: 안내 문구 먼저, 다음 입력 때 mode=3 로 전송 */
                 if (mode === "IMAGE") {
-                    const msg = "지금까지의 너의 정보를 바탕으로 반려동물과 함께할 너의 미래를 그려줄께!! 어떤 동물을 그려줄까?";
+                    const msg = "고객님과 반려동물이 함께할 미래를 그려드릴게요!! 🎨 원하시는 느낌을 말씀해주세요 ✨\nex) 반려동물과 함께 한강에서 산책하는 모습";
                     // 서버에 넘길 question 텍스트 (고정 질문)
                     sessionStorage.setItem("last_image_question", "이미지에 어떤 분위기와 스타일을 원하시나요?");
 
@@ -541,7 +552,7 @@
                         return;
                     }
 
-                    const userMsg = presetMsg || "저에게 맞는 반려동물을 추천해줘";
+                    const userMsg = presetMsg || "나에게 맞는 반려동물을 추천해줘";
                     appendTextBubble(userMsg, "user");
                     chatHistory.push({ role: "user", type: "text", content: userMsg });
                     saveHistory();
