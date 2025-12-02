@@ -155,7 +155,7 @@ public class ChatbotService {
       // 2-1) 프로필 없으면 막기 (모드1 안 한 상태)
       if (profileInfo == null || profileInfo.trim().isEmpty()) {
         PythonChatResponseDto dto = new PythonChatResponseDto();
-        dto.setAnswer("이미지 생성을 사용하려면 먼저 '너를 알고싶어!'에 고객님의 성향을 작성해 주세요.");
+        dto.setAnswer("이미지 생성을 사용하려면 먼저 '고객님을 알고싶어요'에 질문에 맞는 고객님의 성향을 작성해 주세요.");
         dto.setAiQuestion(null);
         dto.setProfileInfo(null);
         dto.setImageUrl(null);
