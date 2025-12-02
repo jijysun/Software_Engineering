@@ -12,20 +12,25 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def analyze_pet_health(request : PetHealthRequest) -> PetHealthResponse:
     prompt = f"""
-    해야하는 일은 다음 두 가지입니다.
-    1. 동물의 현재 건강 상태를 참고하여 사용자의 입력에 자연스러운 대화를 이어나갑니다.
-    2. 사용자의 입력에서 동물의 상태 변화를 추출하여 pet_health 객체를 갱신합니다.
+    해야하는 일은 다음 두 가지입니다:
+    1. 동물의 기존 건강 상태를 참고하여 사용자의 메시지에 응답(msg)을 생성합니다.
+    2. 사용자의 메시지에서 동물의 상태 변화를 추출하여 pet_health 객체를 갱신합니다.
 
-    동물의 현재 건강 상태:
+    응답을 생성할 때는 다음 사항들을 참고합니다:
+    - 반드시 기존 건강상태에 관련된 내용을 참조할 필요는 없습니다.
+    - 사용자의 요청에 따라 동물 관리에 대한 조언, 권고사항, 추천을 제공할 수 있으며 더 좋은 응답을 생성하기 위해서 사용자에게 추가적 정보를 요청하는 질문을 할 수도 있습니다.
+    - 응답은 2~4문장 정도로 반환하시오.
+    
+
+    동물의 기존 건강 상태:
     {request.pet_health.model_dump_json(indent=2)}
 
-    사용자의 입력:
+    사용자의 메시지:
     "{request.msg}"
 
     요구사항:
+    - breed, name과 같은 기본정보는 필드값이 비어있는 경우가 아니라면 임의로 변경하지 말고 유지하십시오.(다만 사용자가 명시적으로 변경 요청한 경우는 제외)
     - 상태 필드값은 한글로 작성하십시오.
-    - 조언(msg)은 생활 관리 중심으로 2~4문장 정도로 반환하시오.
-    - 위험 신호가 명확할 때만 병원 방문 권고를 1문장 덧붙이십시오.
     - 아래 **반환 JSON 스키마**를 정확히 따르십시오.
 
     반환 JSON 스키마: 
@@ -65,7 +70,7 @@ def analyze_pet_health(request : PetHealthRequest) -> PetHealthResponse:
     }}
     """.strip()
 
-    messages = [{"role": "system", "content": "당신은 사용자가 기르는 동물의 케어 어시스턴트입니다."}]
+    messages = [{"role": "system", "content": "당신은 사용자가 기르는 반려동물을 관리하고 상담을 제공하는 챗봇이다."}]
     messages.extend([m.model_dump() for m in request.history])
     messages.append({"role": "user", "content": prompt})
 
